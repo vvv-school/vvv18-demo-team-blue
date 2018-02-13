@@ -11,6 +11,17 @@
 
 #include "state_machine.h"
 
+enum State{
+    INIT=0,
+    GETTING_COMMAND,
+    DETECTING_OBJECT,
+    POINTING_AT_OBJECT,
+    TALKING,
+    HIGH_FIVE,
+    DETECTING_FORCES,
+    REACTING_TO_FEEDBACK
+};
+
 /********************************************************/
 class StateMachine : public yarp::os::RFModule,
                 public state_machine
@@ -18,11 +29,17 @@ class StateMachine : public yarp::os::RFModule,
  /*
   * Define variables here
   */
+    yarp::os::ResourceFinder *rf;
+    yarp::os::RpcServer rpcPort;
+
+    State current_state;
+    bool closing;
+    yarp::os::Mutex mutex;
 
     /********************************************************/
     bool attach(yarp::os::RpcServer &source)
     {
-
+        return this->yarp().attachAsServer(source);
     }
 
     /********************************************************/
@@ -34,6 +51,7 @@ class StateMachine : public yarp::os::RFModule,
     /********************************************************/
     bool quit()
     {
+        closing = true;
         return true;
     }
 
@@ -41,11 +59,25 @@ class StateMachine : public yarp::os::RFModule,
     /********************************************************/
     bool configure(yarp::os::ResourceFinder &rf)
     {
+        this->rf=&rf;
+
+        std::string moduleName = rf.check("name", yarp::os::Value("vino-blue"), "module name (string)").asString();
+        setName(moduleName.c_str());
+
+        rpcPort.open(("/"+getName("/rpc")).c_str());
+
+
+        closing = false;
+
+        attach(rpcPort);
     }
 
     /********************************************************/
     bool close()
     {
+        mutex.lock();
+        rpcPort.close();
+        mutex.unlock();
         return true;
     }
 
