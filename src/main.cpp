@@ -13,6 +13,12 @@
 
 #include "state_machine.h"
 
+enum FORCE_FEEDBACK{
+    NO_FEEDBACK=-1,
+    NEGATIVE_FEEDBACK,
+    POSITIVE_FEEDBACK
+};
+
 enum State{
     INIT=0,
     GETTING_COMMAND,
@@ -44,7 +50,9 @@ class StateMachine : public yarp::os::RFModule,
 public:
     yarp::os::RpcClient voiceCommandPort;
     yarp::os::RpcClient detectorPort;
-
+    yarp::os::RpcClient pointObjectPort;
+    yarp::os::RpcClient forceFeedbackPort;
+    yarp::os::RpcClient behaviorPort;
 
 
     /********************************************************/
@@ -70,16 +78,29 @@ public:
         return true;
     }
 
+    int listenCommand(){
+
+        yarp::os::Bottle command, response;
+        command.addString("listen");
+        voiceCommandPort.write(command,response);
+        if(response.size() == 1){
+            return response.get(0).asInt();
+        }
+        return -1;    // if we
+    }
+
     bool detectObject(int object_id){
         yInfo()<<"StateMachine::detectObject : Detecting object";
         yarp::os::Bottle command, response;
+        command.addString("detect");
+        command.addInt(object_id);
         detectorPort.write(command,response);
 
         ///check size before fetching
-         if(response.size() !=3) {
-             yInfo()<<"StateMachine::detectObject : response is of size :"<<response.size()<<" It should have 3 values";
+        if(response.size() !=3) {
+            yInfo()<<"StateMachine::detectObject : response is of size :"<<response.size()<<" It should have 3 values";
             return false;
-         }
+        }
 
         object_position.resize(3,0.0);
         object_position(0) = response.get(0).asDouble();
@@ -89,14 +110,60 @@ public:
         return true;    // response from NLP should always be boolean
     }
 
-    int listenCommand(){
+    bool pointAtObject(yarp::sig::Vector position){
+
+        if (position.size() != 3){
+            yInfo()<<"StateMachine::pointAtObject : Position should be a vector of 3 points";
+            return false;
+        }
+        yarp::os::Bottle command, response;
+        command.addString("point");
+        command.addDouble(position(0));
+        command.addDouble(position(1));
+        command.addDouble(position(2));
+
+        pointObjectPort.write(command,response);
+
+        return (response.size() == 1 ? response.get(0).asBool() : false);
+    }
+
+    bool talk(std::string text){
 
         yarp::os::Bottle command, response;
+        command.addString("talk");
+        command.addString(text);
         voiceCommandPort.write(command,response);
-        if(response.size() == 1){
-            return response.get(0).asInt();
-        }
-        return -1;    // if we
+        return (response.size() == 1 ? response.get(0).asBool() : false);
+
+    }
+
+    bool high_five(bool val){
+
+        yarp::os::Bottle command, response;
+        std::string str = val ? "high" : "low";
+        command.addString(str);
+
+        pointObjectPort.write(command,response);
+
+        return (response.size() == 1 ? response.get(0).asBool() : false);
+    }
+
+    int detect_forces(){
+
+        yarp::os::Bottle command, response;
+        command.addString("detectForces");
+
+        forceFeedbackPort.write(command,response);
+
+        return (response.size() == 1 ? response.get(0).asInt() : NO_FEEDBACK);
+    }
+
+    bool display_expression(std::string expression){
+
+        yarp::os::Bottle command, response;
+        command.addString(expression);
+        behaviorPort.write(command,response);
+        return (response.size() == 1 ? response.get(0).asBool() : false);
     }
 
     /********************************************************/
@@ -107,11 +174,13 @@ public:
     }
 
     void initializePorts(){
-        std::string robot = "/robot";
 
-        int count = 0;
+        std::string robot = "/robot";
         if(!voiceCommandPort.open(robot+"/voice_proc/rpc:o") ||
-                !detectorPort.open(robot+"/detector/rpc:o")){
+                !detectorPort.open(robot+"/detector/rpc:o")  ||
+                !pointObjectPort.open(robot+"/point_object/rpc:o") ||
+                !forceFeedbackPort.open(robot+"/force_feedback/rpc:o") ||
+                !behaviorPort.open(robot+"/behavior/rpc:o")){
             yError()<<"StateMachine::initializePorts : Initializing ports failed";
         }
 
@@ -129,7 +198,7 @@ public:
 
         rpcPort.open(("/"+getName("/rpc")).c_str());
 
-
+        initializePorts();
 
         closing = false;
 
