@@ -32,6 +32,7 @@ protected:
     int startup_context_id;
 
     RpcServer rpcPort;
+    RpcServer rpcPortFace;
 
     Mutex mutex;
 
@@ -52,21 +53,21 @@ protected:
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("mou"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPort.write(out,in);
+        rpcPortFace.write(out,in);
 
         out.clear();
 
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("leb"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPort.write(out,in);
+        rpcPortFace.write(out,in);
 
         out.clear();
 
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("reb"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPort.write(out,in);
+        rpcPortFace.write(out,in);
     }
 
     /***************************************************/
@@ -245,13 +246,14 @@ public:
         // setting up the facial expressions :
         // sending commands to the face command RPC server
         if(!simulation)
-            rpcPort.open("/robot/behavior/emotions:o");
+            rpcPortFace.open("/robot/behavior/emotions:o");
 
         //setting up the input port of the module
         rpcPort.open("/robot/behavior/rpc:i");
         yInfo() << "Behaviors:: port open at </robot/behavior/rpc:i>";
 
         attach(rpcPort);
+        attach(rpcPortFace);
 
         yInfo() << "Behaviors:: configuration of the behaviors module... done!";
 
@@ -271,10 +273,11 @@ public:
         drvArmr.close();
         drvGaze.close();
         rpcPort.close();
-        if (!simulation)
+        if (!simulation) {
             setFace(FACE_HAPPY);
-        //rpcPortFace.interrupt();
-        //rpcPortFace.close();
+            rpcPortFace.interrupt();
+            rpcPortFace.close();
+        }
         return true;
     }
 
