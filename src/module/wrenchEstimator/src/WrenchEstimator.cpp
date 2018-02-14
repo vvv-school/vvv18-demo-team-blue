@@ -32,6 +32,31 @@ bool WrenchEstimator::readContactForce()
     return true;
 }
 
+bool WrenchEstimator::getHandPose()
+{
+    yarp::sig::Vector W_o_h(3);
+    yarp::sig::Vector W_R_h_axisAngle(4);
+    if (m_rightHand)
+    {
+        iArmRight->getPose(W_o_h, W_R_h_axisAngle);
+    }
+    else
+    {
+        iArmLeft->getPose(W_o_h, W_R_h_axisAngle);
+    }
+
+    yarp::sig::Matrix W_R_h = yarp::math::axis2dcm(W_R_h_axisAngle);
+    zVector(0) = W_R_h(2, 0);
+    zVector(1) = W_R_h(2, 1);
+    zVector(2) = W_R_h(2, 2);
+
+    yInfo() << "Z Axis: " << zVector(0) << " " << zVector(1) << " "<< zVector(2);
+
+    return true;
+}
+
+///////////////////// TO REMOVE ///////////////////
+
 bool WrenchEstimator::readHandPose()
 {
 
@@ -69,6 +94,9 @@ bool WrenchEstimator::readHandPose()
     return true;
 }
 
+///////////////////// TO REMOVE ///////////////////
+
+
 bool WrenchEstimator::estimateForceDirection(bool isRight = true)
 {
     // make sure magnitude of contact force is greater than 0
@@ -93,18 +121,22 @@ double WrenchEstimator::getPeriod() { return m_period; }
 
 bool WrenchEstimator::updateModule()
 {
-    bool proceed = readHandPose();
-    if ( !proceed )
-    {
-//        yWarning() << "WrenchEstimator: Could not read contact force";
-        //return false;
-    }
+    ///////////////////// TO REMOVE ///////////////////
+    bool proceed = true;
+//    bool proceed = readHandPose();
+//    if ( !proceed )
+//    {
+////        yWarning() << "WrenchEstimator: Could not read contact force";
+//        //return false;
+//    }
+
+    ///////////////////// TO REMOVE ///////////////////
     yarp::os::Time::delay(0.1);
 
     proceed = proceed && readContactForce();
     if (!proceed)
     {
-       // yError() << "WrenchEstimator: Could not read contact force";
+        yError() << "WrenchEstimator: Could not read contact force";
         //return false;
     }
 
@@ -112,16 +144,19 @@ bool WrenchEstimator::updateModule()
 
     if (proceed)
     {
-        if (estimateForceDirection(m_rightHand))
+        if (getHandPose())
         {
-            // need to write to port
-            yInfo() << "WrenchEstimator: I sense that humans like what I did";
-            m_forceFeedback = FORCE_FEEDBACK::POSITIVE_FEEDBACK;
-        }
-        else
-        {
-            yInfo() << "WrenchEstimator: Oops I did something wrong ??";
-            m_forceFeedback = FORCE_FEEDBACK::NEGATIVE_FEEDBACK;
+            if (estimateForceDirection(m_rightHand))
+            {
+                // need to write to port
+                yInfo() << "WrenchEstimator: I sense that humans like what I did";
+                m_forceFeedback = FORCE_FEEDBACK::POSITIVE_FEEDBACK;
+            }
+            else
+            {
+                yInfo() << "WrenchEstimator: Oops I did something wrong ??";
+                m_forceFeedback = FORCE_FEEDBACK::NEGATIVE_FEEDBACK;
+            }
         }
     }
     else
@@ -153,8 +188,37 @@ bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
+    yarp::os::Property optArmRight, optArmLeft;
+    optArmRight.put("device", "cartesiancontrollerclient");
+    optArmRight.put("remote", "/icubSim/cartesianController/right_arm");
+    optArmRight.put("local", "/wrenchEstimator/cartesianClient/right_arm");
+
+    optArmLeft.put("device", "cartesiancontrollerclient");
+    optArmLeft.put("remote", "/icubSim/cartesianController/left_arm");
+    optArmLeft.put("local", "/wrenchEstimator/cartesianClient/left_arm");
+
+    ok = drvArmRight.open(optArmRight);
+    ok = ok && drvArmLeft.open(optArmLeft);
+
+    if (!ok)
+    {
+        yError() << "WrenchEstimator: Could not open driver";
+        return false;
+    }
+
+    ok = drvArmRight.view(iArmRight);
+    ok = ok && drvArmLeft.view(iArmLeft);
+
+    if (!ok)
+    {
+        yError() << "WrenchEstimator: Could not view cartesian controllers";
+        return false;
+    }
+
+
     zVector.resize(3, 0);
     contactForce.resize(3, 0);
+
 /////////////////// To remove //////////////
     ok = writePort.open("/pose");
     ok = ok && forcePort.open("/force");
@@ -175,6 +239,8 @@ bool WrenchEstimator::close()
     touchStateOuputPort.close();
     handPose = nullptr;
     cartesianWrench = nullptr;
+    iArmLeft = nullptr;
+    iArmRight = nullptr;
 
     return true;
 }

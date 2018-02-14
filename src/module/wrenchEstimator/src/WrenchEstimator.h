@@ -9,6 +9,8 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Log.h>
 #include <yarp/math/Math.h>
+#include <yarp/dev/PolyDriver.h>
+#include <yarp/dev/CartesianControl.h>
 
 #include <cmath>
 
@@ -42,8 +44,20 @@ yarp::os::BufferedPort<yarp::sig::Vector> forcePort;
     yarp::sig::Vector* cartesianWrench{nullptr};
     yarp::sig::Vector contactForce;
 
+
+    yarp::dev::PolyDriver drvArmRight, drvArmLeft;
+    yarp::dev::ICartesianControl *iArmRight{nullptr}, *iArmLeft{nullptr};
+
     bool readContactForce();
     bool readHandPose();
+
+    /**
+     * @brief getHandPose
+     * Gets pose of the hand from the cartesian controller and gets the
+     * z-vector of the hand
+     * @return true if successful
+     */
+    bool getHandPose();
 
     /**
      * @brief estimateForceDirection
