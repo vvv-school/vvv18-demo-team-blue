@@ -18,6 +18,8 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 
+#define FACE_HAPPY ("hap")
+#define FACE_SAD ("sad")
 
 /***************************************************/
 class CtrlModule: public RFModule
@@ -44,78 +46,34 @@ protected:
 
     Vector initial_gaze;
 
-    /***************************************************/
-/*    void fixate(const Vector &x)
-    {
-        // FILL IN THE CODE
-        igaze->lookAtFixationPointSync(x);
-        igaze->waitMotionDone();
+    void setFace(const string &type) {
+        Bottle in, out;
+
+        out.addVocab(Vocab::encode("set"));
+        out.addVocab(Vocab::encode("mou"));
+        out.addVocab(Vocab::encode(type.c_str()));
+        rpcPort.write(out,in);
+
+        out.clear();
+
+        out.addVocab(Vocab::encode("set"));
+        out.addVocab(Vocab::encode("leb"));
+        out.addVocab(Vocab::encode(type.c_str()));
+        rpcPort.write(out,in);
+
+        out.clear();
+
+        out.addVocab(Vocab::encode("set"));
+        out.addVocab(Vocab::encode("reb"));
+        out.addVocab(Vocab::encode(type.c_str()));
+        rpcPort.write(out,in);
     }
-*/
-    /***************************************************/
-/*    void roll(const Vector &x, const Vector &o)
-    {
-        // stoping a bit after the ball
-        // y axis
-        Vector xb = x;
-        xb[1] = xb[1] - 10;
-        iarm->goToPoseSync(xb, o);
-        iarm->waitMotionDone();
-    }
-*/
-    /***************************************************/
-/*    void look_down()
-    {
-        Time::delay(5.0);
-        // we ask the controller to keep the vergence
-        // from now on fixed at 5.0 deg, which is the
-        // configuration where we calibrated the stereo-vision;
-        // without that, we cannot retrieve good 3D positions
-        // with the real robot
-        if (!simulation)
-            igaze->blockEyes(5.0);
 
-        // FILL IN THE CODE
-        Vector ang(3); // setting the angle to 10.0 deg of vergence
-        ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
-        igaze->lookAtAbsAnglesSync(ang);
-        igaze->waitMotionDone();
-    }
-*/
-    /***************************************************/
-/*    bool make_it_roll(const Vector &cogL, const Vector &cogR)
-    {
-        Vector x;
-        if (simulation)
-        {
-            yInfo()<<"detected cogs = ("<<cogL.toString(0,0)<<") ("<<cogR.toString(0,0)<<")";
-            x=retrieveTarget3D(cogL,cogR);
-        }
-        else if (!object.getLocation(x))
-            return false;
-
-        yInfo()<<"retrieved 3D point = ("<<x.toString(3,3)<<")";
-
-        fixate(x);
-        yInfo()<<"fixating at ("<<x.toString(3,3)<<")";
-
-        Vector o=computeHandOrientation();
-        yInfo()<<"computed orientation = ("<<o.toString(3,3)<<")";
-
-        approachTargetWithHand(x,o);
-        yInfo()<<"approached";
-
-        roll(x,o);
-        yInfo()<<"roll!";
-
-        return true;
-    }
-*/
     /***************************************************/
     void happy()
     {
         Time::delay(5.0);
-        /* TODO : check if this is important to keep this on if we do some gaze movements */
+        ///TODO : check if this is important to keep this on if we do some gaze movements
         // we ask the controller to keep the vergence
         // from now on fixed at 5.0 deg, which is the
         // configuration where we calibrated the stereo-vision;
@@ -133,13 +91,15 @@ protected:
         // Happy arm gesture
 
         // Happy face display
+        if (!simulation)
+            setFace(FACE_HAPPY);
     }
 
     /***************************************************/
     void sad()
     {
         Time::delay(5.0);
-        /* TODO : check if this is important if we do some gaze movements */
+        ///TODO : check if this is important if we do some gaze movements
         // we ask the controller to keep the vergence
         // from now on fixed at 5.0 deg, which is the
         // configuration where we calibrated the stereo-vision;
@@ -157,6 +117,8 @@ protected:
         // sad arm gesture
 
         // sad face display
+        if (!simulation)
+            setFace(FACE_SAD);
     }
 
     /***************************************************/
@@ -173,6 +135,9 @@ protected:
         iarmr->goToPoseSync(initial_armr_position, initial_armr_orientation);
         igaze->lookAtAbsAngles(initial_gaze);
 
+        if (!simulation)
+            setFace(FACE_HAPPY);
+
         // wait that the movements are achieved
         iarml->waitMotionDone();
         iarmr->waitMotionDone();
@@ -183,7 +148,7 @@ public:
     /***************************************************/
     bool configure(ResourceFinder &rf)
     {
-        yInfo() << "Behaviors:: configuration of the behavior module...";
+        yInfo() << "Behaviors:: configuration of the behaviors module...";
         string robot=rf.check("robot",Value("icubSim")).asString();
         simulation=(robot=="icubSim");
 
@@ -238,7 +203,7 @@ public:
         }
         if (drvGaze.isValid()) {
            drvGaze.view(igaze);
-        }
+        } 
 
         // latch the controller context in order to preserve
         // it after closing the module
@@ -277,11 +242,18 @@ public:
         iarmr->getLimits(0,&min,&max);
         iarmr->setLimits(0,min,30.0);
 
-        //setting up the port
+        // setting up the facial expressions :
+        // sending commands to the face command RPC server
+        if(!simulation)
+            rpcPort.open("/robot/behavior/emotions:o");
+
+        //setting up the input port of the module
         rpcPort.open("/robot/behavior/rpc:i");
+        yInfo() << "Behaviors:: port open at </robot/behavior/rpc:i>";
+
         attach(rpcPort);
 
-        yInfo() << "Behaviors:: configuration of the behavior module... done!";
+        yInfo() << "Behaviors:: configuration of the behaviors module... done!";
 
         return true;
     }
@@ -299,6 +271,10 @@ public:
         drvArmr.close();
         drvGaze.close();
         rpcPort.close();
+        if (!simulation)
+            setFace(FACE_HAPPY);
+        //rpcPortFace.interrupt();
+        //rpcPortFace.close();
         return true;
     }
 
@@ -352,7 +328,7 @@ public:
     /***************************************************/
     bool updateModule()
     {
-        //
+        ///TODO : send a bolean to inform the process ?
  /*       // get fresh images
         ImageOf<PixelRgb> *imgL=imgLPortIn.read();
         ImageOf<PixelRgb> *imgR=imgRPortIn.read();

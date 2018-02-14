@@ -78,6 +78,5 @@
           <wait>2</wait>
       </ensure>
       <node>localhost</node>
-  </module>
-
+</module>
 </application>

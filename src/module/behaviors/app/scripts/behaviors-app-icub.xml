@@ -6,6 +6,7 @@
       <port>/yarplogger</port>
       <port>/icub/cartesianController/right_arm/state:o</port>      
       <port>/icub/cartesianController/left_arm/state:o</port>
+      <port>/icub/face/emotions/in</port>
       <port>/iKinGazeCtrl/rpc</port>
   </dependencies>
 
@@ -16,16 +17,22 @@
       <node>localhost</node>
   </module>
 
-<connection>
-    <from>/location</from>
-    <to>/memory/rpc</to>
-    <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/location</from>
+        <to>/memory/rpc</to>
+        <protocol>tcp</protocol>
+    </connection>
 
-<connection>
-    <from>/calibration</from>
-    <to>/iolReachingCalibration/rpc</to>
-    <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/calibration</from>
+        <to>/iolReachingCalibration/rpc</to>
+        <protocol>tcp</protocol>
+    </connection>
 
+    <connection>
+        <from>/icub/behavior/emotions:o</from>
+        <to>/icub/face/emotions/in</to>
+        <protocol>tcp</protocol>
+    </connection>
+    
 </application>
