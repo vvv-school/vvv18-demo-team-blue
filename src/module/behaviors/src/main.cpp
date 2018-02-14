@@ -32,7 +32,7 @@ protected:
     int startup_context_id;
 
     RpcServer rpcPort;
-    RpcServer rpcPortFace;
+    Port portFace;
 
     Mutex mutex;
 
@@ -41,33 +41,33 @@ protected:
     int gaze_int;
     int arml_int;
     int armr_int;
-    bool isClosing;
+
     Vector initial_arml_position, initial_armr_position;
     Vector initial_arml_orientation, initial_armr_orientation;
 
     Vector initial_gaze;
 
     void setFace(const string &type) {
-        Bottle in, out;
+        Bottle out;
 
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("mou"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPortFace.write(out,in);
+        portFace.write(out);
 
         out.clear();
 
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("leb"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPortFace.write(out,in);
+        portFace.write(out);
 
         out.clear();
 
         out.addVocab(Vocab::encode("set"));
         out.addVocab(Vocab::encode("reb"));
         out.addVocab(Vocab::encode(type.c_str()));
-        rpcPortFace.write(out,in);
+        portFace.write(out);
     }
 
     /***************************************************/
@@ -80,14 +80,14 @@ protected:
         // configuration where we calibrated the stereo-vision;
         // without that, we cannot retrieve good 3D positions
         // with the real robot
-        if (!simulation)
-            igaze->blockEyes(5.0);
+        //if (!simulation)
+        //    igaze->blockEyes(5.0);
 
         // Happy gaze
         Vector ang(3); // setting the angle to 10.0 deg of vergence
         //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
-        igaze->lookAtAbsAnglesSync(ang);
-        igaze->waitMotionDone();
+        //igaze->lookAtAbsAnglesSync(ang);
+        //igaze->waitMotionDone();
 
         // Happy arm gesture
 
@@ -106,14 +106,14 @@ protected:
         // configuration where we calibrated the stereo-vision;
         // without that, we cannot retrieve good 3D positions
         // with the real robot
-        if (!simulation)
-            igaze->blockEyes(5.0);
+        //if (!simulation)
+        //    igaze->blockEyes(5.0);
 
         // sad gaze
         Vector ang(3); // setting the angle to 10.0 deg of vergence
         //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
-        igaze->lookAtAbsAnglesSync(ang);
-        igaze->waitMotionDone();
+        //igaze->lookAtAbsAnglesSync(ang);
+        //igaze->waitMotionDone();
 
         // sad arm gesture
 
@@ -147,17 +147,12 @@ protected:
 
 public:
     /***************************************************/
-    /**
-     * @brief configure
-     * @param rf
-     * @return
-     */
     bool configure(ResourceFinder &rf)
     {
         yInfo() << "Behaviors:: configuration of the behaviors module...";
         string robot=rf.check("robot",Value("icubSim")).asString();
         simulation=(robot=="icubSim");
-        isClosing=false;
+
         // setting up the arms controller
         Property optArml, optArmr;
         optArml.put("device","cartesiancontrollerclient");
@@ -251,14 +246,14 @@ public:
         // setting up the facial expressions :
         // sending commands to the face command RPC server
         if(!simulation)
-            rpcPortFace.open("/robot/behavior/emotions:o");
+            portFace.open("/robot/behavior/emotions:o");
 
         //setting up the input port of the module
         rpcPort.open("/robot/behavior/rpc:i");
         yInfo() << "Behaviors:: port open at </robot/behavior/rpc:i>";
 
         attach(rpcPort);
-        attach(rpcPortFace);
+        attach(portFace);
 
         yInfo() << "Behaviors:: configuration of the behaviors module... done!";
 
@@ -268,7 +263,6 @@ public:
     /***************************************************/
     bool interruptModule()
     {
-        isClosing=true;
         return true;
     }
 
@@ -281,8 +275,8 @@ public:
         rpcPort.close();
         if (!simulation) {
             setFace(FACE_HAPPY);
-            rpcPortFace.interrupt();
-            rpcPortFace.close();
+            portFace.interrupt();
+            portFace.close();
         }
         return true;
     }
@@ -367,8 +361,8 @@ public:
         imgLPortOut.write();
         imgRPortOut.write();
 */
-        yarp::os::Time::delay(1.0);
-        return !isClosing;
+
+        return true;
     }
 };
 

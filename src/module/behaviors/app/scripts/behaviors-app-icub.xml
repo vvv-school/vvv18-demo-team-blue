@@ -30,7 +30,7 @@
     </connection>
 
     <connection>
-        <from>/icub/behavior/emotions:o</from>
+        <from>/robot/behavior/emotions:o</from>
         <to>/icub/face/emotions/in</to>
         <protocol>tcp</protocol>
     </connection>
