@@ -251,14 +251,18 @@ public:
         return (response.size() == 1 ? response.get(0).asBool() : false);
     }
 
-    int detect_forces(){
+    bool detect_forces(){
 
         yarp::os::Bottle command, response;
         command.addString("detectForces");
 
         forceFeedbackPort.write(command,response);
+        int status = NO_FEEDBACK;
+        if(response.size() == 1){
+            status = response.get(0).asInt();
+        }
 
-        return (response.size() == 1 ? response.get(0).asInt() : NO_FEEDBACK);
+        return status;
     }
 
     bool display_expression(std::string expression){
