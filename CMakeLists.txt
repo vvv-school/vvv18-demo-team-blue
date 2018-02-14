@@ -18,10 +18,10 @@ include(ICUBcontribHelpers)
 
 icubcontrib_set_default_prefix()
 
-yarp_add_idl(IDL_GEN_FILES src/${PROJECT_NAME}.thrift)
+yarp_add_idl(IDL_GEN_FILES ${PROJECT_NAME}.thrift)
 
-set(idl src/${PROJECT_NAME}.thrift)
-set(doc src/${PROJECT_NAME}.xml)
+set(idl ${PROJECT_NAME}.thrift)
+set(doc ${PROJECT_NAME}.xml)
 source_group("IDL Files" FILES ${idl})
 source_group("DOC Files" FILES ${doc})
 
