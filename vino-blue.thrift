@@ -25,7 +25,7 @@ service state_machine
      * @param
      * @return true/false on success/failure.
      */
-    bool execute();
+    bool execute(i32 state=0);
 
     /**
      * Starts the init action, This resets the state of the robot and brings him back to home position.

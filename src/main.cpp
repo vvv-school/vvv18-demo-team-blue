@@ -74,10 +74,10 @@ public:
     }
 
     /********************************************************/
-    bool execute()
+    bool execute(int s)
     {
-
-        state_val = INIT;
+        //default value of s is INIT
+        state_val = State(s);
         fail_count = 0;
         expression = "sad";
         short pointing_failure = 0;
@@ -117,6 +117,7 @@ public:
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
                 setState(TALKING);
                 fail_count = 0;
+                pointing_failure = 0;
             }
             else {
                 ++pointing_failure;
@@ -188,7 +189,7 @@ public:
             object_id = response.get(0).asInt();
             return true;
         }
-        return false;    // if we
+        return false;
     }
 
     bool detectObject(int object_id){
@@ -285,7 +286,6 @@ public:
                 !behaviorPort.open(robot+"/behavior/rpc:o")){
             yError()<<"StateMachine::initializePorts : Initializing ports failed";
         }
-
 
     }
 
