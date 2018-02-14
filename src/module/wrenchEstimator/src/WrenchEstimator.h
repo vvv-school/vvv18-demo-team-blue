@@ -50,11 +50,11 @@ yarp::os::BufferedPort<yarp::sig::Vector> forcePort;
      * Performs a dot product of the z axis vector of palm and force acting on it
      * @return true is good, bad otherwise
      */
-    bool estimateForceDirection();
+    bool estimateForceDirection(bool isRight);
 
     double m_period;
     int m_forceFeedback = -1;
-    std::string m_hand;
+    bool m_rightHand = true;
 public:
 
     virtual double getPeriod ();

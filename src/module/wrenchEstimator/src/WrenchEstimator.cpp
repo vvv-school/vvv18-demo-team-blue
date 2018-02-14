@@ -7,7 +7,7 @@ bool WrenchEstimator::readContactForce()
     yarp::sig::Vector& v = forcePort.prepare();
     v.clear();
     v.resize(8, 0);
-    v[0] = -10.0;
+    v[0] = 10.0;
 
     forcePort.write();
 
@@ -24,8 +24,6 @@ bool WrenchEstimator::readContactForce()
     contactForce(0) = (*cartesianWrench)[0];
     contactForce(1) = (*cartesianWrench)[1];
     contactForce(2) = (*cartesianWrench)[2];
-
-//    yInfo() << "rpy: " << contactForce(0) << " " << contactForce(1) << " " << contactForce(2);
 
     if (yarp::math::norm(contactForce) < 0)
     {
@@ -61,8 +59,6 @@ bool WrenchEstimator::readHandPose()
     W_R_h_asrpy(1) = (*handPose)[4];
     W_R_h_asrpy(2) = (*handPose)[5];
 
-    //yInfo() << "rpy: " << W_R_h_asrpy(0) << " " << W_R_h_asrpy(1) << " " << W_R_h_asrpy(2);
-
     yarp::sig::Matrix W_R_h = yarp::math::rpy2dcm(W_R_h_asrpy);
 
     // Get the third column for the force direction
@@ -73,7 +69,7 @@ bool WrenchEstimator::readHandPose()
     return true;
 }
 
-bool WrenchEstimator::estimateForceDirection()
+bool WrenchEstimator::estimateForceDirection(bool isRight = true)
 {
     // make sure magnitude of contact force is greater than 0
     if (yarp::math::dot(zVector, contactForce) == 0)
@@ -82,10 +78,12 @@ bool WrenchEstimator::estimateForceDirection()
     }
     else if ( yarp::math::dot(zVector, contactForce) > 0)
     {
-        return false;
+        return (false && isRight);
     }
-
-    return true;
+    else
+    {
+        return (true && isRight);
+    }
 }
 
 
@@ -114,7 +112,7 @@ bool WrenchEstimator::updateModule()
 
     if (proceed)
     {
-        if (estimateForceDirection())
+        if (estimateForceDirection(m_rightHand))
         {
             // need to write to port
             yInfo() << "WrenchEstimator: I sense that humans like what I did";
