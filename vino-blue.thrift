@@ -39,7 +39,7 @@ service state_machine
      * @param
      * @return the object_id to be detected.
      */
-    i32 listenCommand();
+    bool listenCommand();
 
     /**
      * @brief detectObject Detects a given object

@@ -21,13 +21,14 @@ enum FORCE_FEEDBACK{
 
 enum State{
     INIT=0,
-    GETTING_COMMAND,
+    LISTENING,
     DETECTING_OBJECT,
     POINTING_AT_OBJECT,
     TALKING,
     HIGH_FIVE,
     DETECTING_FORCES,
-    REACTING_TO_FEEDBACK
+    REACTING_TO_FEEDBACK,
+    END
 };
 
 /********************************************************/
@@ -40,12 +41,23 @@ class StateMachine : public yarp::os::RFModule,
     yarp::os::ResourceFinder *rf;
     yarp::os::RpcServer rpcPort;
 
-    State current_state;
+    State state_val;
     bool closing;
     yarp::os::Mutex mutex;
 
-    yarp::sig::Vector object_position;
+    const short FAILURE_THRESHOLD = 5;
 
+    yarp::sig::Vector object_position;
+    int object_id;
+    std::string text_to_talk;
+    std::string expression;
+    short fail_count;
+    inline void setState(State s) {
+        mutex.lock();
+        // set the state to given state if it not END. this avoids overrwriting of inteerupt update
+        state_val = state_val == END ? END : s;
+        mutex.unlock();
+    }
 
 public:
     yarp::os::RpcClient voiceCommandPort;
@@ -64,11 +76,100 @@ public:
     /********************************************************/
     bool execute()
     {
-        yInfo()<<"StateMachine::execute : Executing Init";
-        yarp::os::Time::delay(1);
-        yInfo()<<"StateMachine::execute : Listening to command";
-        yarp::os::Time::delay(1);
-        yInfo()<<"StateMachine::execute : Detecting object";
+
+        state_val = INIT;
+        fail_count = 0;
+        expression = "sad";
+        short pointing_failure = 0;
+
+        while(state_val != END){
+
+            if(state_val == INIT && fail_count < FAILURE_THRESHOLD  && init()) {
+                setState(LISTENING);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "Sorry, I failed to initialize";
+                setState(TALKING);
+            }
+
+            if(state_val == LISTENING && fail_count < FAILURE_THRESHOLD  && listenCommand()) {
+                setState(DETECTING_OBJECT);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "I tried few times, but I cannot understand you.";
+                setState(TALKING);
+            }
+
+            if(state_val == DETECTING_OBJECT  && fail_count < FAILURE_THRESHOLD && detectObject(object_id)) {
+                setState(POINTING_AT_OBJECT);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "I tried few times, but I cannot understand you.";
+                setState(TALKING);
+            }
+
+            if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
+                setState(TALKING);
+                fail_count = 0;
+            }
+            else {
+                ++pointing_failure;
+                setState(DETECTING_FORCES);
+            }
+
+            if(state_val == TALKING && fail_count < FAILURE_THRESHOLD  && pointAtObject(object_position)) {
+                setState(HIGH_FIVE);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "How can I fail to talk and talk this. you better check your state machine";
+                setState(TALKING);
+            }
+
+            if(state_val == HIGH_FIVE && fail_count < FAILURE_THRESHOLD && high_five(true) ) {
+                setState(DETECTING_FORCES);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "I cannot raise my hand";
+                setState(TALKING);
+            }
+
+            if(state_val == DETECTING_FORCES && fail_count < FAILURE_THRESHOLD  && detect_forces()) {
+                setState(REACTING_TO_FEEDBACK);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "I was waiting for 5 minutes to get a high five. Do you not like me?";
+                setState(TALKING);
+            }
+
+            if(state_val ==  REACTING_TO_FEEDBACK && fail_count < FAILURE_THRESHOLD && display_expression(expression) ) {
+                setState(END);
+                fail_count = 0;
+            }
+            else {
+                ++fail_count;
+                text_to_talk = "If you are happy and you know it clap your hands.";
+                setState(END);
+            }
+
+
+        }
+
+        if(fail_count == FAILURE_THRESHOLD){
+            return false;
+        }
+
         return true;
     }
 
@@ -78,15 +179,16 @@ public:
         return true;
     }
 
-    int listenCommand(){
+    bool listenCommand(){
 
         yarp::os::Bottle command, response;
         command.addString("listen");
         voiceCommandPort.write(command,response);
         if(response.size() == 1){
-            return response.get(0).asInt();
+            object_id = response.get(0).asInt();
+            return true;
         }
-        return -1;    // if we
+        return false;    // if we
     }
 
     bool detectObject(int object_id){
@@ -210,7 +312,14 @@ public:
     bool close()
     {
         mutex.lock();
+        // close everything
         rpcPort.close();
+        voiceCommandPort.close();
+        detectorPort.close();
+        pointObjectPort.close();
+        forceFeedbackPort.close();
+        behaviorPort.close();
+
         mutex.unlock();
         return true;
     }
@@ -225,6 +334,12 @@ public:
     bool updateModule()
     {
         return !closing;
+    }
+
+    bool interruptModule(){
+        closing = true;
+        setState(END);
+
     }
 };
 
