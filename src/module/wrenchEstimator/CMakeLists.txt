@@ -4,7 +4,6 @@ project(wrenchEstimator)
 
 find_package(YARP REQUIRED)
 find_package(ICUBcontrib REQUIRED)
-find_package(iDynTree REQUIRED)
 
 # extend the current search path used by cmake to load helpers
 #list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
@@ -20,7 +19,7 @@ find_package(iDynTree REQUIRED)
 
 add_executable(${PROJECT_NAME} src/main.cpp src/WrenchEstimator.h src/WrenchEstimator.cpp)
 #target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${YARP_INCLUDE_DIRS}})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${YARP_LIBRARIES} ${iDynTree_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${YARP_LIBRARIES})
 
 # Use M_PI in Windows Visual Studio
 #if(MSVC)
