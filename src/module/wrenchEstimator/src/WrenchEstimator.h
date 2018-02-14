@@ -12,6 +12,12 @@
 
 #include <cmath>
 
+enum FORCE_FEEDBACK
+{
+    NO_FEEDBACK=-1,
+    NEGATIVE_FEEDBACK,
+    POSITIVE_FEEDBACK
+};
 
 class WrenchEstimator : public yarp::os::RFModule
 {
@@ -19,12 +25,21 @@ class WrenchEstimator : public yarp::os::RFModule
     yarp::os::BufferedPort<yarp::sig::Vector> rightHandPoseInputPort;
     yarp::os::BufferedPort<yarp::sig::Vector> rightWrenchInputPort;
 
+    yarp::os::BufferedPort<yarp::os::Bottle> touchStateOuputPort;
+
     yarp::sig::Vector m_rightHandWrench;
     yarp::sig::Vector m_rightHandPose; // x y z
 
+    /////////////////// To remove //////////////
+yarp::os::BufferedPort<yarp::sig::Vector> writePort;
+yarp::os::BufferedPort<yarp::sig::Vector> forcePort;
 
-    // delete when other module is ready
+   /////////////////// To remove //////////////
+
+
     yarp::sig::Vector zVector;
+    yarp::sig::Vector* handPose{nullptr};
+    yarp::sig::Vector* cartesianWrench{nullptr};
     yarp::sig::Vector contactForce;
 
     bool readContactForce();
@@ -38,7 +53,7 @@ class WrenchEstimator : public yarp::os::RFModule
     bool estimateForceDirection();
 
     double m_period;
-
+    int m_forceFeedback = -1;
     std::string m_hand;
 public:
 
