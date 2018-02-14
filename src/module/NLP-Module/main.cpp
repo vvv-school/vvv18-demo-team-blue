@@ -19,7 +19,7 @@ class NLPModule:public RFModule
     string grammar;
 
     double period;
-
+    bool isGrammarInitialized;
     Port iSpeakPort;
     Bottle iSpeakBottle;
     bool closing;
@@ -46,6 +46,8 @@ public:
     */
     bool respond(const Bottle& command, Bottle& reply)
     {
+        IH_Expand_vocab(iSpeakHelper_port, objects);
+
         yInfo()<<"Responding to command";
         //just echo back the command
         if (command.size() == 1 && command.get(0).asString()=="quit")
@@ -67,27 +69,30 @@ public:
     * Send grammar and objects to the speech recognition module
     */
     string IH_Expand_vocab(RpcClient& port, vector<string> objects) {
-        Bottle wb;
-        Bottle reply;
+        if(!isGrammarInitialized){
+            Bottle wb;
+            Bottle reply;
 
-        wb.addString("name");
-        for (int i = 0; i < objects.size(); i++) {
-            wb.addString(objects[i]);
+            wb.addString("name");
+            for (int i = 0; i < objects.size(); i++) {
+                wb.addString(objects[i]);
+            }
+            port.write(wb,reply);
+            string rep  =  reply.get(0).asString();
+
+            if (rep == "ack") {
+                isGrammarInitialized = true;
+                for (int k = 0; k < objects.size(); k++) {
+                    objects[k].clear();
+                }
+                for (int i=1;  i < reply.size()-1; i++) {
+                    objects[i] = reply.get(i).asString();
+                    yInfo() << "objects are: " << objects[i];
+                }
+            } else yInfo() <<"Was not able to set the new vocabulary: " << reply.get(0).asString();
+
+            return rep;
         }
-        port.write(wb,reply);
-        string rep  =  reply.get(0).asString();
-
-        if (rep == "ack") {
-            for (int k = 0; k < objects.size(); k++) {
-                objects[k].clear();
-            }
-            for (int i=1;  i < reply.size()-1; i++) {
-                objects[i] = reply.get(i).asString();
-                yInfo() << "objects are: " << objects[i];
-            }
-        } else yInfo() <<"Was not able to set the new vocabulary: " << reply.get(0).asString();
-
-       return rep;
     }
 
     /*
@@ -130,17 +135,23 @@ public:
 
         //-- initilization
         closing = false;
-        if(!iSpeakHelper_port.open("/iolHelper/rpc")) {
-            yError() << "Error opening helper rpc";
-            return false;
-        }
+//        if(!iSpeakHelper_port.open("/iolHelper/rpc")) {
+//            yError() << "Error opening helper rpc";
+//            return false;
+//        }
 
-        if(!speechRecog_port.open("/speechRecognizer/rpc")) {
+        if(!speechRecog_port.open("/speechRecognizer/rpc:o")) {
             yError() << "Error opening speech recognizer rpc";
             return false;
         }
 
-        if(!iSpeakPort.open("/iSpeak/rpc")) {
+        if(!handlerPort.open("/robot/voice_proc/rpc")) {
+            yError() << "Error opening speech recognizer rpc";
+            return false;
+        }
+
+
+        if(!iSpeakPort.open("/iSpeak/rpc:o")) {
             yError() << "Error opening iSpeak port";
             return false;
         }
@@ -151,9 +162,7 @@ public:
         //-- defining speech grammar for Menu
         grammar = "Where is the #Object object | Take the #Object object | Grasp the #Object object";
 
-        //send dict to speech recognition module
-        string expandVocabulary = IH_Expand_vocab(iSpeakHelper_port, objects);
-
+        isGrammarInitialized = false;
         period=1.0; //default value
 
         attach(handlerPort);
