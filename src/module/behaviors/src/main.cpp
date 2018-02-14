@@ -41,7 +41,7 @@ protected:
     int gaze_int;
     int arml_int;
     int armr_int;
-
+    bool isClosing;
     Vector initial_arml_position, initial_armr_position;
     Vector initial_arml_orientation, initial_armr_orientation;
 
@@ -147,12 +147,17 @@ protected:
 
 public:
     /***************************************************/
+    /**
+     * @brief configure
+     * @param rf
+     * @return
+     */
     bool configure(ResourceFinder &rf)
     {
         yInfo() << "Behaviors:: configuration of the behaviors module...";
         string robot=rf.check("robot",Value("icubSim")).asString();
         simulation=(robot=="icubSim");
-
+        isClosing=false;
         // setting up the arms controller
         Property optArml, optArmr;
         optArml.put("device","cartesiancontrollerclient");
@@ -263,6 +268,7 @@ public:
     /***************************************************/
     bool interruptModule()
     {
+        isClosing=true;
         return true;
     }
 
@@ -361,8 +367,8 @@ public:
         imgLPortOut.write();
         imgRPortOut.write();
 */
-
-        return true;
+        yarp::os::Time::delay(1.0);
+        return !isClosing;
     }
 };
 
