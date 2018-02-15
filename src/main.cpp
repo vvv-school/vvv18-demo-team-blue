@@ -13,6 +13,8 @@
 
 #include "state_machine.h"
 
+//#define DEBUG true
+
 enum FORCE_FEEDBACK{
     NO_FEEDBACK=-1,
     NEGATIVE_FEEDBACK,
@@ -41,11 +43,12 @@ class StateMachine : public yarp::os::RFModule,
     yarp::os::ResourceFinder *rf;
     yarp::os::RpcServer rpcPort;
 
+
     State state_val;
     bool closing;
     yarp::os::Mutex mutex;
 
-    const short FAILURE_THRESHOLD = 5;
+    const int FAILURE_THRESHOLD = 5;
 
     yarp::sig::Vector object_position;
     int object_id;
@@ -53,6 +56,7 @@ class StateMachine : public yarp::os::RFModule,
     std::string expression;
     short fail_count;
     inline void setState(State s) {
+        yInfo()<<"Changing state from "<<state_val<<" to "<<(int)s<<" Failure count"<<fail_count;
         mutex.lock();
         // set the state to given state if it not END. this avoids overrwriting of inteerupt update
         state_val = state_val == END ? END : s;
@@ -83,14 +87,14 @@ public:
         short pointing_failure = 0;
 
         while(state_val != END){
-
+            yInfo()<< "Current State :"<< state_val;
             if(state_val == INIT && fail_count < FAILURE_THRESHOLD  && init()) {
                 setState(LISTENING);
                 fail_count = 0;
             }
             else {
                 ++fail_count;
-                text_to_talk = "Sorry, I failed to initialize";
+                text_to_talk = "Sorry, I failed to initialize. I'll try again";
                 setState(TALKING);
             }
 
@@ -109,12 +113,14 @@ public:
                 fail_count = 0;
             }
             else {
+                yInfo()<<"Failed detecting. object_id = "<<object_id<<" current state is "<<state_val<<" Failure count "<<fail_count;
                 ++fail_count;
-                text_to_talk = "I tried few times, but I cannot understand you.";
+                text_to_talk = "Cannot detect the objects";
                 setState(TALKING);
             }
 
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
+                text_to_talk = "Give me a high five if that is right.";
                 setState(TALKING);
                 fail_count = 0;
                 pointing_failure = 0;
@@ -124,7 +130,7 @@ public:
                 setState(DETECTING_FORCES);
             }
 
-            if(state_val == TALKING && fail_count < FAILURE_THRESHOLD  && pointAtObject(object_position)) {
+            if(state_val == TALKING && fail_count < FAILURE_THRESHOLD  && talk(text_to_talk)) {
                 setState(HIGH_FIVE);
                 fail_count = 0;
             }
@@ -152,20 +158,34 @@ public:
                 ++fail_count;
                 text_to_talk = "I was waiting for 5 minutes to get a high five. Do you not like me?";
                 setState(TALKING);
+                expression = "sad";
             }
 
             if(state_val ==  REACTING_TO_FEEDBACK && fail_count < FAILURE_THRESHOLD && display_expression(expression) ) {
-                setState(END);
+
+                if(expression == "happy"){
+                    text_to_talk = "We came, we saw, we conquered";
+                    setState(END);
+                }
+                else {
+                    text_to_talk = "I tried. Lets do it one more time. Show me the objects";
+                    setState(DETECTING_OBJECT);
+                }
+
+                talk(text_to_talk); // send the talk command manually --- lets do it the italian way
                 fail_count = 0;
+                continue;       // this should not be required
+
             }
             else {
                 ++fail_count;
-                text_to_talk = "We came, we saw, we conquered";
                 setState(END);
             }
-
+            yInfo()<< "inside the loop"<<" state :"<<state_val<<" failure count "<<fail_count;
 
         }
+        yInfo()<< "outside of loop"<<" state :"<<state_val<<" failure count "<<fail_count;
+        display_expression("home");
 
         if(fail_count == FAILURE_THRESHOLD){
             return false;
@@ -184,6 +204,11 @@ public:
 
         yInfo()<<"StateMachine::listenCommand : Executing listenCommand";
 
+#ifdef DEBUG
+        object_id = 1;
+        return true;
+#endif
+
         yarp::os::Bottle command, response;
         command.addString("listen");
         voiceCommandPort.write(command,response);
@@ -196,6 +221,11 @@ public:
 
     bool detectObject(int object_id){
         yInfo()<<"StateMachine::detectObject : Detecting object";
+
+#ifdef DEBUG
+        object_position.resize(3, 0.8);
+        return true;
+#endif
         yarp::os::Bottle command, response;
         command.addString("detect");
         command.addInt(object_id);
@@ -218,6 +248,9 @@ public:
     bool pointAtObject(yarp::sig::Vector position){
 
         yInfo()<<"StateMachine::pointAtObject : Pointing at object";
+#ifdef DEBUG
+        return true;
+#endif
         if (position.size() != 3){
             yInfo()<<"StateMachine::pointAtObject : Position should be a vector of 3 points";
             return false;
@@ -233,9 +266,13 @@ public:
         return (response.size() == 1 ? response.get(0).asBool() : false);
     }
 
-    bool talk(std::string text){
+    bool talk(const std::string &text){
 
         yInfo()<<"StateMachine::talking "+text;
+
+#ifdef DEBUG
+        return true;
+#endif
         yarp::os::Bottle command, response;
         command.addString("talk");
         command.addString(text);
@@ -248,6 +285,9 @@ public:
 
         yInfo()<<"StateMachine::high-five";
 
+#ifdef DEBUG
+        return true;
+#endif
         yarp::os::Bottle command, response;
         std::string str = val ? "high" : "low";
         command.addString(str);
@@ -261,6 +301,11 @@ public:
 
         yInfo()<<"StateMachine::detect-forces";
 
+#ifdef DEBUG
+        expression = "sad";
+        return true;
+#endif
+
         yarp::os::Bottle command, response;
         command.addString("detectForces");
 
@@ -268,17 +313,33 @@ public:
         int status = NO_FEEDBACK;
         if(response.size() == 1){
             status = response.get(0).asInt();
+            switch (status) {
+            case NO_FEEDBACK:
+                expression = "sad";
+                return false;
+            case NEGATIVE_FEEDBACK:
+                expression = "sad";
+                return true;
+            case POSITIVE_FEEDBACK:
+                expression = "happy";
+                return true;
+            default:
+                break;
+            }
         }
 
-        return status;
+        return true;
     }
 
-    bool display_expression(std::string expression){
+    bool display_expression(std::string exp){
 
         yInfo()<<"StateMachine::display-expression";
-
+#ifdef DEBUG
+        expression = "sad";
+        return true;
+#endif
         yarp::os::Bottle command, response;
-        command.addString(expression);
+        command.addString(exp);
         behaviorPort.write(command,response);
         return (response.size() == 1 ? response.get(0).asBool() : false);
     }
