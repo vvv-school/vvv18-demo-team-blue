@@ -239,20 +239,20 @@ public:
         return true;
 #endif
         yarp::os::Bottle command, response;
-        command.addString("get3D");
+        command.addString("get3DPoint");
         command.addInt(object_id);
         detectorPort.write(command,response);
-
+        yarp::os::Bottle *list = response.get(0).asList();
         ///check size before fetching
-        if(response.size() !=3) {
-            yInfo()<<"StateMachine::detectObject : response is of size :"<<response.size()<<" It should have 3 values";
+        if(list->size() !=3) {
+            yInfo()<<"StateMachine::detectObject : response is of size :"<<list->size()<<" It should have 3 values";
             return false;
         }
 
         object_position.resize(3,0.0);
-        object_position(0) = response.get(0).asDouble();
-        object_position(1) = response.get(1).asDouble();
-        object_position(2) = response.get(2).asDouble();
+        object_position(0) = list->get(0).asDouble();
+        object_position(1) = list->get(1).asDouble();
+        object_position(2) = list->get(2).asDouble();
 
         return true;    // response from NLP should always be boolean
     }
