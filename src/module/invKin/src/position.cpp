@@ -53,6 +53,10 @@ protected:
     std::vector<int> hi5jointList ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     std::vector<int> highFive_joint_vals ={-73,40,-10,94,2,-10,0,58,30,4,4,4,6,11,4,4};
 
+    /**
+     * @brief highFive
+     * @return
+     */
     bool highFive()
     {
 
@@ -127,7 +131,11 @@ protected:
 
 
 
-
+    /**
+     * @brief point_to_target
+     * @param x
+     * @return
+     */
     bool point_to_target(Vector x)
     {
 
@@ -230,6 +238,11 @@ protected:
     }
 
 public:
+    /**
+     * @brief configure
+     * @param rf
+     * @return
+     */
     virtual bool configure(ResourceFinder &rf)
     {
 
@@ -324,6 +337,10 @@ public:
         return true;
     }
 
+    /**
+     * @brief close
+     * @return
+     */
     virtual bool close()
     {
         rpc.close();
@@ -334,6 +351,12 @@ public:
         return true;
     }
 
+    /**
+     * @brief respond
+     * @param cmd
+     * @param reply
+     * @return
+     */
     virtual bool respond(const Bottle &cmd, Bottle &reply)
     {
         reply.clear();
@@ -374,11 +397,19 @@ public:
         return true;
     }
 
+    /**
+     * @brief getPeriod
+     * @return
+     */
     virtual double getPeriod()
     {
         return 1.0;
     }
 
+    /**
+     * @brief updateModule
+     * @return
+     */
     virtual bool updateModule()
     {
         return true;

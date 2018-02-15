@@ -1,5 +1,9 @@
 #include "WrenchEstimator.h"
 
+/**
+ * @brief WrenchEstimator::readContactForce
+ * @return
+ */
 bool WrenchEstimator::readContactForce()
 {
     if (m_rightHand)
@@ -43,6 +47,10 @@ bool WrenchEstimator::readContactForce()
     return true;
 }
 
+/**
+ * @brief WrenchEstimator::getHandPose
+ * @return
+ */
 bool WrenchEstimator::getHandPose()
 {
     yarp::sig::Vector W_o_h(3);
@@ -66,7 +74,11 @@ bool WrenchEstimator::getHandPose()
     return true;
 }
 
-
+/**
+ * @brief WrenchEstimator::estimateForceDirection
+ * @param isRight
+ * @return
+ */
 bool WrenchEstimator::estimateForceDirection(bool isRight = false)
 {
     if (yarp::math::norm(contactForce) > 1)
@@ -94,9 +106,16 @@ bool WrenchEstimator::estimateForceDirection(bool isRight = false)
 
 
 // RFModule related methods
-
+/**
+ * @brief WrenchEstimator::getPeriod
+ * @return
+ */
 double WrenchEstimator::getPeriod() { return 0.01; }
 
+/**
+ * @brief WrenchEstimator::updateModule
+ * @return
+ */
 bool WrenchEstimator::updateModule()
 {
     readContactForce();
@@ -104,6 +123,10 @@ bool WrenchEstimator::updateModule()
    return !isClosing;
 }
 
+/**
+ * @brief WrenchEstimator::forceUpdate
+ * @return
+ */
 bool WrenchEstimator::forceUpdate(){
 
     readContactForce();
@@ -116,6 +139,12 @@ bool WrenchEstimator::forceUpdate(){
     return true;
 }
 
+/**
+ * @brief WrenchEstimator::respond
+ * @param command
+ * @param response
+ * @return
+ */
 bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle& response)
 {
     m_forceFeedback = NO_FEEDBACK;
@@ -153,6 +182,11 @@ bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle&
 
 }
 
+/**
+ * @brief WrenchEstimator::configure
+ * @param rf
+ * @return
+ */
 bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
 {
     isClosing = false;
@@ -211,6 +245,10 @@ bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
     return true;
 }
 
+/**
+ * @brief WrenchEstimator::close
+ * @return
+ */
 bool WrenchEstimator::close()
 {
     leftWrenchInputPort.close();
@@ -225,6 +263,10 @@ bool WrenchEstimator::close()
     return true;
 }
 
+/**
+ * @brief WrenchEstimator::interruptModule
+ * @return
+ */
 bool WrenchEstimator::interruptModule()
 {
     isClosing = true;

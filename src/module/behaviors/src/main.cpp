@@ -48,7 +48,12 @@ protected:
     Vector initial_arml_orientation, initial_armr_orientation;
 
     Vector initial_gaze;
-
+    
+    /**
+     * @brief setFace
+     * @param type
+     * Set a -type- facial expression on the iCub
+     */
     void setFace(const string &type) {
         Bottle out;
 
@@ -73,6 +78,11 @@ protected:
     }
 
     /***************************************************/
+    /**
+     * @brief happy
+     * Animation for an happy gesture
+     * head and facial movements
+     */
     void happy()
     {
         Vector ang(3);
@@ -107,6 +117,11 @@ protected:
     }
 
     /***************************************************/
+    /**
+     * @brief sad
+     * Animation for an happy gesture
+     * head and facial movements
+     */
     void sad()
     {
         Vector ang(3);
@@ -132,6 +147,11 @@ protected:
     }
 
     /***************************************************/
+    /**
+     * @brief home
+     * Set back the robot to the home position
+     * The home position is recorded at the configuration of the behavior module
+     */
     void home()
     {
         // go back to the initail position of the robot
@@ -276,6 +296,10 @@ public:
     }
 
     /***************************************************/
+    /**
+     * @brief interruptModule
+     * @return
+     */
     bool interruptModule()
     {
         isClosing=true;
@@ -283,6 +307,10 @@ public:
     }
 
     /***************************************************/
+    /**
+     * @brief close
+     * @return
+     */
     bool close()
     {
         drvArml.close();
@@ -298,6 +326,12 @@ public:
     }
 
     /***************************************************/
+    /**
+     * @brief respond
+     * @param command
+     * @param reply
+     * @return
+     */
     bool respond(const Bottle &command, Bottle &reply)
     {
         string cmd=command.get(0).asString();
@@ -339,12 +373,20 @@ public:
     }
 
     /***************************************************/
+    /**
+     * @brief getPeriod
+     * @return
+     */
     double getPeriod()
     {
         return 0.0;     // sync upon incoming images
     }
 
     /***************************************************/
+    /**
+     * @brief updateModule
+     * @return
+     */
     bool updateModule()
     {
         yarp::os::Time::delay(1.0);

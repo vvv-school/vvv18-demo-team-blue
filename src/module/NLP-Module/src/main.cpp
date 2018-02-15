@@ -30,24 +30,36 @@ class NLPModule:public RFModule
     Mutex mutex;
 public:
 
+    /**
+     * @brief getPeriod
+     * @return
+     */
     double getPeriod()
     {
         //returns the period of the module: a constant
         return period; //module periodicity (seconds)
     }
 
-    /*
-    * This is our main function. Will be called periodically every getPeriod() seconds.
-    */
+
+    /**
+     * @brief updateModule
+     * @return
+     * This is our main function. Will be called periodically every getPeriod() seconds.
+     */
     bool updateModule()
     {
 
         return !closing;
     }
 
-    /*
-    * Message handler. Just echo all received messages.
-    */
+
+    /**
+     * @brief respond
+     * @param command
+     * @param reply
+     * @return
+     * Message handler. Just echo all received messages.
+     */
     bool respond(const Bottle& command, Bottle& reply)
     {
         IH_Expand_vocab(iSpeakHelper_port, objects);
@@ -96,9 +108,13 @@ public:
         return true;
     }
 
-    /*
-    * Send grammar and objects to the speech recognition module
-    */
+    /**
+     * @brief IH_Expand_vocab
+     * @param port
+     * @param objects
+     * @return
+     * Send grammar and objects to the speech recognition module
+     */
     string IH_Expand_vocab(RpcClient& port, vector<string> objects) {
         if(!isGrammarInitialized){
             Bottle wb;
@@ -127,10 +143,13 @@ public:
         return "";
     }
 
-    /*
-    * Return the string detected by the speech detector module
-    */
-
+    /**
+     * @brief SM_Reco_Grammar
+     * @param port
+     * @param gram
+     * @return
+     * Return the string detected by the speech detector module
+     */
     Bottle SM_Reco_Grammar(RpcClient& port, string gram) {
         Bottle wb;
         Bottle reply;
@@ -141,28 +160,38 @@ public:
         port.write(wb,reply);
         return reply;
     }
-    /*
-    *
-    */
+
+
+    /**
+     * @brief talk
+     * @param phrase
+     * @return
+     */
     bool talk(string phrase) {
         iSpeakBottle.clear();
         iSpeakBottle.addString(phrase);
         return iSpeakPort.write(iSpeakBottle);
 
     }
-    /*
-    *
-    */
+
+    /**
+     * @brief listen
+     * @return
+     */
     Bottle listen() {
         Bottle recognized = SM_Reco_Grammar(speechRecog_port, grammar);
         return recognized;
     }
 
-    /*
-    * Configure function. Receive a previously initialized
-    * resource finder object. Use it to configure your module.
-    * Open port and attach it to message handler.
-    */
+
+    /**
+     * @brief configure
+     * @param rf
+     * @return
+     * Configure function. Receive a previously initialized
+     * resource finder object. Use it to configure your module.
+     * Open port and attach it to message handler.
+     */
     bool configure(yarp::os::ResourceFinder &rf)
     {
 
@@ -208,9 +237,11 @@ public:
         return true;
     }
 
-    /*
-    * Interrupt function.
-    */
+    /**
+     * @brief interruptModule
+     * @return
+     * Interrupt function.
+     */
     bool interruptModule()
     {
         closing = true;
@@ -219,9 +250,11 @@ public:
         return true;
     }
 
-    /*
-    * Close function, to perform cleanup.
-    */
+    /**
+     * @brief close
+     * @return
+     * Close function, to perform cleanup.
+     */
     bool close()
     {
         yInfo()<<"Calling close function";
