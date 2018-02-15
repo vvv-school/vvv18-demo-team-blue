@@ -1,5 +1,5 @@
 <application>
-<name>vino-blue</name>
+<name>vino-blue-2</name>
 
 <dependencies>
   <port>/yarplogger</port>
@@ -234,7 +234,7 @@
 
 <connection>
     <from>/robot/behavior/rpc:o</from>
-    <to>/robot/behavior/rpc</to>
+    <to>/robot/behavior/rpc:i</to>
     <protocol>udp</protocol>
 </connection>
 <!-- end behaviors -->
