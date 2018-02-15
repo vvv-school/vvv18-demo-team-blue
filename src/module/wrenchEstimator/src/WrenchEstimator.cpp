@@ -2,14 +2,13 @@
 
 bool WrenchEstimator::readContactForce()
 {
-
     if (m_rightHand)
     {
-        cartesianWrench = rightWrenchInputPort.read(false);
+        cartesianWrench = rightWrenchInputPort.read(true);
     }
     else
     {
-        cartesianWrench = leftWrenchInputPort.read(false);
+        cartesianWrench = leftWrenchInputPort.read(true);
     }
     if (cartesianWrench == nullptr)
     {
@@ -21,7 +20,23 @@ bool WrenchEstimator::readContactForce()
     contactForce(1) = (*cartesianWrench)[1];
     contactForce(2) = (*cartesianWrench)[2];
 
-    if (yarp::math::norm(contactForce) < 5)
+    // Calibrate for offsets on first call
+    if(m_forceThreshold_x < 0.1 && m_forceThreshold_y  < 0.1 && m_forceThreshold_z < 0.1){
+        m_forceThreshold_x = contactForce(0) ;
+        m_forceThreshold_y = contactForce(1);
+        m_forceThreshold_z = contactForce(2);
+        yInfo()<<"Updated thresholds";
+        return true;
+    }
+
+    // remove offsets
+    contactForce(0) -= m_forceThreshold_x ;
+    contactForce(1) -=  m_forceThreshold_y ;
+    contactForce(2) -=  m_forceThreshold_z ;
+
+    yInfo() << "Force norm: " << yarp::math::norm(contactForce);
+    yInfo() << "Force: " << contactForce(0) << " " << contactForce(1) << " "<< contactForce(2);
+    if (yarp::math::norm(contactForce) < 1)
     {
         return false;
     }
@@ -52,111 +67,99 @@ bool WrenchEstimator::getHandPose()
 }
 
 
-bool WrenchEstimator::estimateForceDirection(bool isRight = true)
+bool WrenchEstimator::estimateForceDirection(bool isRight = false)
 {
+    if (yarp::math::norm(contactForce) > 1)
+    {
     // make sure magnitude of contact force is greater than 0
-    if (yarp::math::dot(zVector, contactForce) == 0)
-    {
-        yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
+        yInfo()<<"Value of dot :" << yarp::math::dot(zVector, contactForce);
+            if ( yarp::math::dot(zVector, contactForce) < 0)
+            {
+                m_forceFeedback = NEGATIVE_FEEDBACK;
+                return true; // && isRight);
+            }
+            else if ( yarp::math::dot(zVector, contactForce) > 0)
+            {
+                m_forceFeedback = POSITIVE_FEEDBACK;
+                return false; // && isRight);
+            }
+            else
+            {
+                yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
+            }
+
     }
-    else if ( yarp::math::dot(zVector, contactForce) > 0)
-    {
-        return (false && isRight);
-    }
-    else
-    {
-        return (true && isRight);
-    }
+    return false;
 }
 
 
 // RFModule related methods
 
-double WrenchEstimator::getPeriod() { return m_period; }
+double WrenchEstimator::getPeriod() { return 0.01; }
 
 bool WrenchEstimator::updateModule()
 {
-    if (m_run)
-    {
-        bool proceed = true;
+    readContactForce();
+    yarp::os::Time::delay(1.0);
+   return !isClosing;
+}
 
-        proceed = proceed && readContactForce();
-        if (!proceed)
-        {
-            yError() << "WrenchEstimator: Could not read contact force";
-            //return false;
-        }
+bool WrenchEstimator::forceUpdate(){
 
-        //yarp::os::Time::delay(0.1);
-
-        if (proceed)
-        {
-            if (getHandPose())
-            {
-                if (estimateForceDirection(m_rightHand))
-                {
-                    // need to write to port
-                    yInfo() << "WrenchEstimator: I sense that humans like what I did";
-                    m_mutex.lock();
-                    m_forceFeedback = FORCE_FEEDBACK::POSITIVE_FEEDBACK;
-                    m_mutex.unlock();
-                }
-                else
-                {
-                    yInfo() << "WrenchEstimator: Oops I did something wrong ??";
-                    m_mutex.lock();
-                    m_forceFeedback = FORCE_FEEDBACK::NEGATIVE_FEEDBACK;
-                    m_mutex.unlock();
-                }
-            }
-        }
-        else
-        {
-            m_mutex.lock();
-            m_forceFeedback = FORCE_FEEDBACK::NO_FEEDBACK;
-            m_mutex.unlock();
-        }
-
-        yarp::os::Bottle& state = touchStateOuputPort.prepare();
-        state.clear();
-        state.addInt(m_forceFeedback);
-        touchStateOuputPort.write();
-    }
-    contactForce.zero();
-    zVector.zero();
+    readContactForce();
+    getHandPose();
+    estimateForceDirection(false);
+    yarp::os::Bottle& state = touchStateOuputPort.prepare();
+    state.clear();
+    state.addInt(m_forceFeedback);
+    touchStateOuputPort.write();
     return true;
 }
 
 bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle& response)
 {
-    std::string cmd = command.get(0).asString();
-    if (cmd == "detectForces")
-    {
-        m_mutex.lock();
-        m_run = true;
-        m_mutex.unlock();
+    m_forceFeedback = NO_FEEDBACK;
+    // calibrate
+    readContactForce();
 
+    std::string cmd = command.get(0).asString();
+    // rpc call
+    if (cmd=="help")
+    {
+        response.addVocab(yarp::os::Vocab::encode("many"));
+        response.addString("Available commands:");
+        response.addString("- detectForces");
+        response.addString("- quit");
+    }
+    else if (cmd == "detectForces")
+    {
+        m_run = true;
         double t0 = yarp::os::Time::now();
         double timeout = 0.0;
-        while(m_forceFeedback == FORCE_FEEDBACK::NO_FEEDBACK || timeout < 2)
+        while(m_forceFeedback == FORCE_FEEDBACK::NO_FEEDBACK && timeout < 2)
         {
+            forceUpdate();
             timeout += yarp::os::Time::now() - t0;
         }
-
-        m_mutex.lock();
-        m_run = false;
-        m_mutex.unlock();
-
+        
         response.addInt(m_forceFeedback);
         stateMachineHandlerPort.reply(response);
     }
+    else
+        // the father class already handles the "quit" command
+        return RFModule::respond(command,response);
+
+    m_run = false;
 
 }
 
 bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
 {
+    isClosing = false;
     bool ok = false;
 
+
+    // open ports
     ok = rightWrenchInputPort.open("/wrench-estimator/right_arm/cartesianEndEffectorWrench:i");
     ok = ok && leftWrenchInputPort.open("/wrench-estimator/left_arm/cartesianEndEffectorWrench:i");
     ok = ok && touchStateOuputPort.open("/robot/forceFeedback:o");
@@ -169,13 +172,16 @@ bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
+    std::string robot = rf.check("robot", yarp::os::Value("icub")).asString();
+
+    // open cartesian interface
     yarp::os::Property optArmRight, optArmLeft;
     optArmRight.put("device", "cartesiancontrollerclient");
-    optArmRight.put("remote", "/icub/cartesianController/right_arm");
+    optArmRight.put("remote", "/" + robot + "/cartesianController/right_arm");
     optArmRight.put("local", "/wrenchEstimator/cartesianClient/right_arm");
 
     optArmLeft.put("device", "cartesiancontrollerclient");
-    optArmLeft.put("remote", "/icub/cartesianController/left_arm");
+    optArmLeft.put("remote", "/" + robot + "/cartesianController/left_arm");
     optArmLeft.put("local", "/wrenchEstimator/cartesianClient/left_arm");
 
     ok = drvArmRight.open(optArmRight);
@@ -196,6 +202,7 @@ bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
+    // attach rpc service port
     attach(stateMachineHandlerPort);
 
     zVector.resize(3, 0);
@@ -215,5 +222,11 @@ bool WrenchEstimator::close()
     iArmLeft = nullptr;
     iArmRight = nullptr;
 
+    return true;
+}
+
+bool WrenchEstimator::interruptModule()
+{
+    isClosing = true;
     return true;
 }

@@ -20,6 +20,7 @@ using namespace yarp::math;
 
 #define FACE_HAPPY ("hap")
 #define FACE_SAD ("sad")
+#define FACE_SURPRISED ("sur")
 
 /***************************************************/
 class CtrlModule: public RFModule
@@ -37,6 +38,7 @@ protected:
     Mutex mutex;
 
     bool simulation;
+    bool isClosing;
 
     int gaze_int;
     int arml_int;
@@ -73,53 +75,60 @@ protected:
     /***************************************************/
     void happy()
     {
-        Time::delay(5.0);
-        ///TODO : check if this is important to keep this on if we do some gaze movements
-        // we ask the controller to keep the vergence
-        // from now on fixed at 5.0 deg, which is the
-        // configuration where we calibrated the stereo-vision;
-        // without that, we cannot retrieve good 3D positions
-        // with the real robot
-        //if (!simulation)
-        //    igaze->blockEyes(5.0);
+        Vector ang(3);
+        Vector ang_1(3);
+        ang[0] = 0; ang[1] = 10; ang[2] = 5.0;
+        ang_1[0] = 5; ang_1[1] = 10; ang_1[2] = 5;
 
-        // Happy gaze
-        Vector ang(3); // setting the angle to 10.0 deg of vergence
-        //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
-        //igaze->lookAtAbsAnglesSync(ang);
-        //igaze->waitMotionDone();
-
-        // Happy arm gesture
+        // Surprised face display
+        if (!simulation) {
+            setFace(FACE_SURPRISED);
+        }
+        // Surpised head going back
+        igaze->lookAtAbsAnglesSync(ang);
+        igaze->waitMotionDone();
 
         // Happy face display
         if (!simulation)
             setFace(FACE_HAPPY);
+
+        // Happy gaze
+        for (int ii = 0; ii < 2; ii++) {
+            ang[1] = ang_1[ii];
+            igaze->lookAtAbsAnglesSync(ang);
+            igaze->waitMotionDone();
+        }
+
+        // Happy arm gesture
+
+        // getting back to home
+        home();
+
     }
 
     /***************************************************/
     void sad()
     {
-        Time::delay(5.0);
-        ///TODO : check if this is important if we do some gaze movements
-        // we ask the controller to keep the vergence
-        // from now on fixed at 5.0 deg, which is the
-        // configuration where we calibrated the stereo-vision;
-        // without that, we cannot retrieve good 3D positions
-        // with the real robot
-        //if (!simulation)
-        //    igaze->blockEyes(5.0);
-
-        // sad gaze
-        Vector ang(3); // setting the angle to 10.0 deg of vergence
-        //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
-        //igaze->lookAtAbsAnglesSync(ang);
-        //igaze->waitMotionDone();
-
-        // sad arm gesture
+        Vector ang(3);
+        Vector ang_0(3);
+        ang[0] = 0; ang[1] = -20; ang[2] = 5.0;
+        ang_0[0] = 0; ang_0[1] = -5; ang_0[2] = 5; ang_0[3] = -5;
 
         // sad face display
         if (!simulation)
             setFace(FACE_SAD);
+
+        // sad gaze
+        for (int ii = 0; ii < 3; ii++) {
+            ang[0] = ang_0[ii];
+            igaze->lookAtAbsAnglesSync(ang);
+            igaze->waitMotionDone();
+        }
+
+        // sad arm gesture
+
+        // getting back to home
+        home();
     }
 
     /***************************************************/
@@ -147,12 +156,17 @@ protected:
 
 public:
     /***************************************************/
+    /**
+     * @brief configure
+     * @param rf
+     * @return
+     */
     bool configure(ResourceFinder &rf)
     {
         yInfo() << "Behaviors:: configuration of the behaviors module...";
         string robot=rf.check("robot",Value("icubSim")).asString();
         simulation=(robot=="icubSim");
-
+        isClosing=false;
         // setting up the arms controller
         Property optArml, optArmr;
         optArml.put("device","cartesiancontrollerclient");
@@ -204,7 +218,7 @@ public:
         }
         if (drvGaze.isValid()) {
            drvGaze.view(igaze);
-        } 
+        }
 
         // latch the controller context in order to preserve
         // it after closing the module
@@ -245,15 +259,16 @@ public:
 
         // setting up the facial expressions :
         // sending commands to the face command RPC server
-        if(!simulation)
+        if(!simulation){
             portFace.open("/robot/behavior/emotions:o");
+            attach(portFace);
+        }
 
         //setting up the input port of the module
         rpcPort.open("/robot/behavior/rpc:i");
         yInfo() << "Behaviors:: port open at </robot/behavior/rpc:i>";
 
         attach(rpcPort);
-        attach(portFace);
 
         yInfo() << "Behaviors:: configuration of the behaviors module... done!";
 
@@ -263,6 +278,7 @@ public:
     /***************************************************/
     bool interruptModule()
     {
+        isClosing=true;
         return true;
     }
 
@@ -331,38 +347,8 @@ public:
     /***************************************************/
     bool updateModule()
     {
-        ///TODO : send a bolean to inform the process ?
- /*       // get fresh images
-        ImageOf<PixelRgb> *imgL=imgLPortIn.read();
-        ImageOf<PixelRgb> *imgR=imgRPortIn.read();
-
-        // interrupt sequence detected
-        if ((imgL==NULL) || (imgR==NULL))
-            return false;
-
-        // compute the center-of-mass of pixels of our color
-        mutex.lock();
-        okL=getCOG(*imgL,cogL);
-        okR=getCOG(*imgR,cogR);
-        mutex.unlock();
-
-        PixelRgb color;
-        color.r=255; color.g=0; color.b=0;
-
-        if (okL)
-            draw::addCircle(*imgL,color,(int)cogL[0],(int)cogL[1],5);
-
-        if (okR)
-            draw::addCircle(*imgR,color,(int)cogR[0],(int)cogR[1],5);
-
-        imgLPortOut.prepare()=*imgL;
-        imgRPortOut.prepare()=*imgR;
-
-        imgLPortOut.write();
-        imgRPortOut.write();
-*/
-
-        return true;
+        yarp::os::Time::delay(1.0);
+        return !isClosing;
     }
 };
 

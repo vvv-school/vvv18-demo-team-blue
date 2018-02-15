@@ -22,7 +22,7 @@ list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 
 # building 
 include_directories(${YARP_INCLUDE_DIRS})
-add_executable(NLP-Module main.cpp)
+add_executable(NLP-Module src/main.cpp)
 target_link_libraries(NLP-Module ${YARP_LIBRARIES})
 install(TARGETS NLP-Module DESTINATION bin)
 
