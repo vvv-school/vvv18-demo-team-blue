@@ -11,12 +11,6 @@ struct Bottle{}
     yarp.includefile="yarp/os/Bottle.h"
 )
 
-struct Vector{}
-(
-    yarp.name = "yarp::sig::Vector"
-    yarp.includefile="yarp/sig/Vector.h"
-)
-
 service state_machine
 {
 
@@ -53,7 +47,7 @@ service state_machine
      * @param position  a 3D point in cartesian coordinates in torso frame
      * @return  true/false on success/failure.
      */
-     bool pointAtObject(1:Vector position);
+     bool pointAtObject(1:double x, 2:double y, 3:double z );
 
     /**
      * @brief talk calls the rpc to make the robot talk the given text
@@ -67,7 +61,7 @@ service state_machine
      * @param val ture/false for high/low
      * @return  true/false on success/failure.
      */
-     bool high_five(1:bool val);
+     bool high_five();
 
     /**
      * @brief detect_forces calls the rpc to check force sensors on robot hand for a feedback from user

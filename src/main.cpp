@@ -1,5 +1,3 @@
-
-
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RFModule.h>
@@ -94,8 +92,10 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "Sorry, I failed to initialize. I'll try again";
-                setState(TALKING);
+                if(fail_count >= FAILURE_THRESHOLD){
+                    text_to_talk = "Sorry, I failed to initialize. please try again";
+                    setState(TALKING);
+                }
             }
 
             if(state_val == LISTENING && fail_count < FAILURE_THRESHOLD  && listenCommand()) {
@@ -104,8 +104,10 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "I tried few times, but I cannot understand you.";
-                setState(TALKING);
+                if(fail_count >= FAILURE_THRESHOLD){
+                    text_to_talk = "I tried few times, but I cannot understand you.";
+                    setState(TALKING);
+                }
             }
 
             if(state_val == DETECTING_OBJECT  && fail_count < FAILURE_THRESHOLD && detectObject(object_id)) {
@@ -115,8 +117,10 @@ public:
             else {
                 yInfo()<<"Failed detecting. object_id = "<<object_id<<" current state is "<<state_val<<" Failure count "<<fail_count;
                 ++fail_count;
-                text_to_talk = "Cannot detect the objects";
-                setState(TALKING);
+                if(fail_count >= FAILURE_THRESHOLD){
+                    text_to_talk = "Cannot detect the objects";
+                    setState(TALKING);
+                }
             }
 
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
@@ -127,7 +131,8 @@ public:
             }
             else {
                 ++pointing_failure;
-                setState(DETECTING_FORCES);
+                if(pointing_failure >= FAILURE_THRESHOLD)
+                    setState(DETECTING_FORCES);
             }
 
             if(state_val == TALKING && fail_count < FAILURE_THRESHOLD  && talk(text_to_talk)) {
@@ -136,18 +141,22 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "How can I fail to talk and talk this. you better check your state machine";
-                setState(TALKING);
+                if(fail_count >= FAILURE_THRESHOLD) {
+                    text_to_talk = "How can I fail to talk and talk this. you better check your state machine";
+                    setState(TALKING);
+                }
             }
 
-            if(state_val == HIGH_FIVE && fail_count < FAILURE_THRESHOLD && high_five(true) ) {
+            if(state_val == HIGH_FIVE && fail_count < FAILURE_THRESHOLD && high_five() ) {
                 setState(DETECTING_FORCES);
                 fail_count = 0;
             }
             else {
                 ++fail_count;
-                text_to_talk = "I cannot raise my hand";
-                setState(TALKING);
+                if(fail_count >= FAILURE_THRESHOLD){
+                    text_to_talk = "I cannot raise my hand";
+                    setState(TALKING);
+                }
             }
 
             if(state_val == DETECTING_FORCES && fail_count < FAILURE_THRESHOLD  && detect_forces()) {
@@ -156,9 +165,11 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "I was waiting for 5 minutes to get a high five. Do you not like me?";
-                setState(TALKING);
-                expression = "sad";
+                if(fail_count >= FAILURE_THRESHOLD){
+                    text_to_talk = "I was waiting for 5 minutes to get a high five. Do you not like me?";
+                    setState(TALKING);
+                    expression = "sad";
+                }
             }
 
             if(state_val ==  REACTING_TO_FEEDBACK && fail_count < FAILURE_THRESHOLD && display_expression(expression) ) {
@@ -179,7 +190,8 @@ public:
             }
             else {
                 ++fail_count;
-                setState(END);
+                if(fail_count >= FAILURE_THRESHOLD)
+                    setState(END);
             }
             yInfo()<< "inside the loop"<<" state :"<<state_val<<" failure count "<<fail_count;
 
@@ -227,7 +239,7 @@ public:
         return true;
 #endif
         yarp::os::Bottle command, response;
-        command.addString("detect");
+        command.addString("get3D");
         command.addInt(object_id);
         detectorPort.write(command,response);
 
@@ -246,20 +258,22 @@ public:
     }
 
     bool pointAtObject(yarp::sig::Vector position){
+        if (position.size() == 3)
+            return pointAtObject(position(0), position(1), position(2));
+        return false;
+    }
+
+    bool pointAtObject(double x, double y, double z){
 
         yInfo()<<"StateMachine::pointAtObject : Pointing at object";
 #ifdef DEBUG
         return true;
 #endif
-        if (position.size() != 3){
-            yInfo()<<"StateMachine::pointAtObject : Position should be a vector of 3 points";
-            return false;
-        }
         yarp::os::Bottle command, response;
         command.addString("point");
-        command.addDouble(position(0));
-        command.addDouble(position(1));
-        command.addDouble(position(2));
+        command.addDouble(x);
+        command.addDouble(y);
+        command.addDouble(z);
 
         pointObjectPort.write(command,response);
 
@@ -281,7 +295,7 @@ public:
 
     }
 
-    bool high_five(bool val){
+    bool high_five(){
 
         yInfo()<<"StateMachine::high-five";
 
@@ -289,7 +303,7 @@ public:
         return true;
 #endif
         yarp::os::Bottle command, response;
-        std::string str = val ? "high" : "low";
+        std::string str = "high";
         command.addString(str);
 
         pointObjectPort.write(command,response);
@@ -302,7 +316,7 @@ public:
         yInfo()<<"StateMachine::detect-forces";
 
 #ifdef DEBUG
-        expression = "sad";
+        expression = "happy";
         return true;
 #endif
 
@@ -331,11 +345,11 @@ public:
         return true;
     }
 
-    bool display_expression(std::string exp){
+    bool display_expression(const std::string &exp){
 
         yInfo()<<"StateMachine::display-expression";
 #ifdef DEBUG
-        expression = "sad";
+        expression = "happy";
         return true;
 #endif
         yarp::os::Bottle command, response;
