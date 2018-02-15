@@ -90,10 +90,10 @@ protected:
             imod1->setControlMode(joint,VOCAB_CM_POSITION);
 
             // set up the speed in [deg/s]
-            ipos1->setRefSpeed(joint,60.0);
+            ipos1->setRefSpeed(joint,30.0);
 
             // set up max acceleration in [deg/s^2]
-            ipos1->setRefAcceleration(joint,100.0);
+            ipos1->setRefAcceleration(joint,30.0);
 
             // yield the actual movement
             yInfo()<<"Yielding new target: "<<target<<" [deg]";
@@ -163,10 +163,10 @@ protected:
                 }
 
 
-                    ipos->setRefSpeed(fingers,60.0);
+                    ipos->setRefSpeed(fingers,30.0);
 
                     // set up max acceleration in [deg/s^2]
-                    ipos->setRefAcceleration(fingers,100.0);
+                    ipos->setRefAcceleration(fingers,40.0);
 
                     imod->setControlMode(fingers,VOCAB_CM_POSITION);
                     ipos->positionMove(fingers,finger_joint_values[i]);
@@ -175,6 +175,7 @@ protected:
                     bool done=false;
 
                         double t0=Time::now();
+                        yInfo()<<"Entering timed loop";
                         while (!done&&(Time::now()-t0<3))
                         {
                             yInfo()<<"Waiting...";
@@ -185,7 +186,8 @@ protected:
                         }
 
 
-                }
+                } //iterated though joints
+                
                   if (count.size() == jointList.size())
                           {
                              yInfo()<<"Fist completed";
@@ -195,15 +197,35 @@ protected:
                           {
                              yWarning()<<" Fist Timeout expired";
                              for (int j=0; j< count.size(); j++)
-                                cout << count[j];
+                                yInfo() << count[j];
                            //  return false;
                           }
+                          
+                          
+                          
+                          
+                                            yarp::sig::Vector curr_dof;
+                                            iarm->getDOF(curr_dof);
+                                            //        iarm->setTrackingMode(true);
+                                            yarp::sig::Vector new_dof = zeros(3);
+                                            new_dof[0]=0;
+                                            new_dof[1]=0;
+                                            new_dof[2]=0;
+                                            iarm->setDOF(new_dof, curr_dof);
 
+
+
+                          
+                          
+                          
+                          
+yInfo()<<"Getting pose";
                 iarm->getPose(3,I_pos,I_o);
                 Matrix R(3,3);
                 Matrix T(4,4);
                 R = axis2dcm(I_o);
-                for(int i=0; i<2; i++)
+yInfo()<<"Calculating things";                
+for(int i=0; i<2; i++)
                         {
                             for(int j=0; j<2; j++)
                             {
@@ -214,6 +236,7 @@ protected:
                         {
                             T[i][3] = I_pos[i];
                         }
+
                 T[3][0] = 0.0;
                 T[3][1] = 0.0;
                 T[3][2] = 0.0;
@@ -228,10 +251,15 @@ protected:
 
                 pointing_pos.resize(4);
                 pointing_pos = T*padded_x;
-                iarm->setTrajTime(1.0);
-                iarm->goToPoseSync(pointing_pos,I_o);
-                iarm->waitMotionDone();
-
+yInfo()<<"Black magic";                
+iarm->setTrajTime(5.0);
+                Vector xod(3), ood(4), qod(8);
+                iarm->askForPose(x, I_o, xod, ood, qod);
+                iarm->goToPoseSync(xod, ood);
+               // iarm->goToPoseSync(x,I_o);
+                yInfo()<<"Going to pose";
+               // iarm->waitMotionDone();
+                yarp::os::Time::delay(5.0);
 
                 return true;
 
@@ -258,7 +286,7 @@ public:
         optCart.put("device","cartesiancontrollerclient");
         optCart.put("remote","/"+robot+"/cartesianController/right_arm");
        // optCart.put("remote","/icubSim/cartesianController/right_arm");
-        optCart.put("local","/cartesian_client/right_arm");
+        optCart.put("local","/cartesian_client_local/right_arm");
 
         optJointR.put("device","remote_controlboard");
         optJointR.put("remote","/"+robot+"/right_arm");
