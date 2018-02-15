@@ -146,7 +146,7 @@ public:
             return false;
         }
 
-        if(!handlerPort.open("/robot/voice_proc/rpc")) {
+        if(!handlerPort.open("/robot/voice_proc/rpc:o")) {
             yError() << "Error opening speech recognizer rpc";
             return false;
         }
