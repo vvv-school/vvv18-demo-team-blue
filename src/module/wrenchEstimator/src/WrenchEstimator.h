@@ -17,6 +17,10 @@
 
 #include <cmath>
 
+/**
+ * @brief The FORCE_FEEDBACK enum
+ * To get the direction of the external force
+ */
 enum FORCE_FEEDBACK
 {
     NO_FEEDBACK=-1,
@@ -26,34 +30,38 @@ enum FORCE_FEEDBACK
 
 class WrenchEstimator : public yarp::os::RFModule
 {
-
+    // Port to read the cartesian end effector wrenches
     yarp::os::BufferedPort<yarp::sig::Vector> leftWrenchInputPort;
     yarp::os::BufferedPort<yarp::sig::Vector> rightWrenchInputPort;
 
+    // Port to force feedback data
     yarp::os::BufferedPort<yarp::os::Bottle> touchStateOuputPort;
 
+    // RPC port to talk to the state machine
     yarp::os::RpcServer stateMachineHandlerPort;
+
+    // External wrench acting on the hand
     yarp::sig::Vector m_handWrench;
+    // Pose of te hand
     yarp::sig::Vector m_handPose; // x y z r p y
 
-    /////////////////// To remove //////////////
-yarp::os::BufferedPort<yarp::sig::Vector> writePort;
-yarp::os::BufferedPort<yarp::sig::Vector> forcePort;
-
-   /////////////////// To remove //////////////
-
-
+    // Direction of force vector
     yarp::sig::Vector zVector;
+
+    // Vector to read pose of the hand from cartesian controller
     yarp::sig::Vector* handPose{nullptr};
+
+    // Vector to read wrench from whole body dynamics
     yarp::sig::Vector* cartesianWrench{nullptr};
+    // contact force vector
     yarp::sig::Vector contactForce;
 
-
+    // Cartesian control interface
     yarp::dev::PolyDriver drvArmRight, drvArmLeft;
     yarp::dev::ICartesianControl *iArmRight{nullptr}, *iArmLeft{nullptr};
 
+    // Read methods
     bool readContactForce();
-    bool readHandPose();
 
     /**
      * @brief getHandPose
@@ -71,11 +79,25 @@ yarp::os::BufferedPort<yarp::sig::Vector> forcePort;
     bool estimateForceDirection(bool isRight);
 
 
+    bool forceUpdate();
 
-    double m_period;
+    double m_period = 0.1;
+
+    // which feedback
     int m_forceFeedback = -1;
+
+    // which hand
     bool m_rightHand = false;
+
+    // run only after state machine flag
     bool m_run = false;
+
+    bool isClosing = false;
+
+    // threshold to account for zmobie force values
+    double m_forceThreshold_x = 0.0;
+    double m_forceThreshold_y = 0.0;
+    double m_forceThreshold_z = 0.0;
     yarp::os::Mutex m_mutex;
 
 public:
@@ -85,6 +107,7 @@ public:
     virtual bool updateModule ();
     virtual bool configure (yarp::os::ResourceFinder &rf);
     virtual bool close ();
+    virtual bool interruptModule();
 };
 
 #endif
