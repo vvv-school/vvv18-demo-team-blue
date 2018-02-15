@@ -214,7 +214,7 @@ public:
         joint=3;
 
         // open rpc port
-        rpc.open("/robot/point_object/rpc");
+        rpc.open("/robot/point_object/rpc:o");
 
         // attach the callback respond()
         attach(rpc);
