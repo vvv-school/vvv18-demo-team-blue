@@ -114,6 +114,7 @@ public:
     *
     */
     bool talk(string phrase) {
+        iSpeakBottle.clear();
         iSpeakBottle.addString(phrase);
         return iSpeakPort.write(iSpeakBottle);
 
@@ -141,27 +142,27 @@ public:
 //            return false;
 //        }
 
-        if(!speechRecog_port.open("/speechRecognizer/rpc")) {
+        if(!speechRecog_port.open("/speechRecognizer/rpc:o")) {
             yError() << "Error opening speech recognizer rpc";
             return false;
         }
 
-        if(!handlerPort.open("/robot/voice_proc/rpc")) {
+        if(!handlerPort.open("/robot/voice_proc/rpc:o")) {
             yError() << "Error opening speech recognizer rpc";
             return false;
         }
 
 
-        if(!iSpeakPort.open("/iSpeak/rpc:o")) {
+        if(!iSpeakPort.open("/iSpeak:o")) {
             yError() << "Error opening iSpeak port";
             return false;
         }
 
         //-- defining objects and actions vocabularies
-        objects = {"Blue", "Green", "Red"};
+        objects = {"mug", "soda bottle"};
 
         //-- defining speech grammar for Menu
-        grammar = "Where is the #Object object | Take the #Object object | Grasp the #Object object";
+        grammar = "Where is the mug | Where is the soda bottle";
 
         isGrammarInitialized = false;
         period=1.0; //default value
