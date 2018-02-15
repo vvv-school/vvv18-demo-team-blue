@@ -74,10 +74,10 @@ public:
     }
 
     /********************************************************/
-    bool execute()
+    bool execute(int s)
     {
-
-        state_val = INIT;
+        //default value of s is INIT
+        state_val = State(s);
         fail_count = 0;
         expression = "sad";
         short pointing_failure = 0;
@@ -117,6 +117,7 @@ public:
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
                 setState(TALKING);
                 fail_count = 0;
+                pointing_failure = 0;
             }
             else {
                 ++pointing_failure;
@@ -159,7 +160,7 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "If you are happy and you know it clap your hands.";
+                text_to_talk = "We came, we saw, we conquered";
                 setState(END);
             }
 
@@ -181,6 +182,8 @@ public:
 
     bool listenCommand(){
 
+        yInfo()<<"StateMachine::listenCommand : Executing listenCommand";
+
         yarp::os::Bottle command, response;
         command.addString("listen");
         voiceCommandPort.write(command,response);
@@ -188,7 +191,7 @@ public:
             object_id = response.get(0).asInt();
             return true;
         }
-        return false;    // if we
+        return false;
     }
 
     bool detectObject(int object_id){
@@ -214,6 +217,7 @@ public:
 
     bool pointAtObject(yarp::sig::Vector position){
 
+        yInfo()<<"StateMachine::pointAtObject : Pointing at object";
         if (position.size() != 3){
             yInfo()<<"StateMachine::pointAtObject : Position should be a vector of 3 points";
             return false;
@@ -231,6 +235,7 @@ public:
 
     bool talk(std::string text){
 
+        yInfo()<<"StateMachine::talking "+text;
         yarp::os::Bottle command, response;
         command.addString("talk");
         command.addString(text);
@@ -241,6 +246,8 @@ public:
 
     bool high_five(bool val){
 
+        yInfo()<<"StateMachine::high-five";
+
         yarp::os::Bottle command, response;
         std::string str = val ? "high" : "low";
         command.addString(str);
@@ -250,17 +257,25 @@ public:
         return (response.size() == 1 ? response.get(0).asBool() : false);
     }
 
-    int detect_forces(){
+    bool detect_forces(){
+
+        yInfo()<<"StateMachine::detect-forces";
 
         yarp::os::Bottle command, response;
         command.addString("detectForces");
 
         forceFeedbackPort.write(command,response);
+        int status = NO_FEEDBACK;
+        if(response.size() == 1){
+            status = response.get(0).asInt();
+        }
 
-        return (response.size() == 1 ? response.get(0).asInt() : NO_FEEDBACK);
+        return status;
     }
 
     bool display_expression(std::string expression){
+
+        yInfo()<<"StateMachine::display-expression";
 
         yarp::os::Bottle command, response;
         command.addString(expression);
@@ -271,11 +286,15 @@ public:
     /********************************************************/
     bool quit()
     {
+
+        yInfo()<<"StateMachine::quit";
         closing = true;
         return true;
     }
 
     void initializePorts(){
+
+        yInfo()<<"StateMachine::initializeports";
 
         std::string robot = "/robot";
         if(!voiceCommandPort.open(robot+"/voice_proc/rpc:o") ||
@@ -286,13 +305,13 @@ public:
             yError()<<"StateMachine::initializePorts : Initializing ports failed";
         }
 
-
     }
 
 public:
     /********************************************************/
     bool configure(yarp::os::ResourceFinder &rf)
     {
+
         this->rf=&rf;
 
         std::string moduleName = rf.check("name", yarp::os::Value("vino-blue"), "module name (string)").asString();
