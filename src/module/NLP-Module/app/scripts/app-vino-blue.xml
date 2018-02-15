@@ -1,0 +1,49 @@
+<application>
+<name>NLP-Module</name>
+
+<dependencies>
+    <port>/yarplogger</port>
+    <port timeout="10">/iSpeak</port>
+    <port timeout="10">/speechRecognizer/rpc</port>
+</dependencies>
+
+
+<module>
+  <name>NLP-Module</name>
+  <parameters></parameters>
+  <node>localhost</node>
+  <dependencies>
+    <port>/robot/voice_proc/rpc:o</port>
+    <port>/robot/voice_proc/rpc</port>
+  </dependencies>
+</module>
+
+
+<connection>
+    <from>/speechRecognizer/rpc:o</from>
+    <to>/speechRecognizer/rpc</to>
+    <protocol>udp</protocol>
+</connection>
+
+<connection>
+    <from>/iSpeak/rpc:o</from>
+    <to>/iSpeak/rpc</to>
+    <protocol>udp</protocol>
+</connection>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</application>
