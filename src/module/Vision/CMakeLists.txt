@@ -77,4 +77,4 @@ yarp_install(FILES ${conf} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${PRO
 yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
 
 # generate ad-hoc project to perform "make uninstall"
-icubcontrib_add_uninstall_target()
+#icubcontrib_add_uninstall_target()
