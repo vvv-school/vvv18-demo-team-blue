@@ -21,7 +21,7 @@ bool WrenchEstimator::readContactForce()
     contactForce(1) = (*cartesianWrench)[1];
     contactForce(2) = (*cartesianWrench)[2];
 
-    if (yarp::math::norm(contactForce) < 5)
+    if (yarp::math::norm(contactForce) < m_forceThreshold)
     {
         return false;
     }
@@ -54,18 +54,21 @@ bool WrenchEstimator::getHandPose()
 
 bool WrenchEstimator::estimateForceDirection(bool isRight = true)
 {
+    if (yarp::math::norm(contactForce) > m_forceThreshold)
+    {
     // make sure magnitude of contact force is greater than 0
-    if (yarp::math::dot(zVector, contactForce) == 0)
-    {
-        yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
-    }
-    else if ( yarp::math::dot(zVector, contactForce) > 0)
-    {
-        return (false && isRight);
-    }
-    else
-    {
-        return (true && isRight);
+            if (yarp::math::dot(zVector, contactForce) == 0)
+            {
+                yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
+            }
+            else if ( yarp::math::dot(zVector, contactForce) > 0)
+            {
+                return (false && isRight);
+            }
+            else
+            {
+                return (true && isRight);
+            }
     }
 }
 
