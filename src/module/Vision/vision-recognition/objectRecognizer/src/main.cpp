@@ -552,8 +552,7 @@ public:
             imagePort->set_crop_mode(crop_mode);
 
             // rpc ports
-//            rpcPortHuman.open(("/"+name+"/human:io").c_str());
-            rpcPortHuman.open("/robot/detector/rpc");
+            rpcPortHuman.open(("/"+name+"/human:io").c_str());
 
             rpcPort.open(("/"+name+"/rpc").c_str());
             attach(rpcPort);
@@ -589,12 +588,7 @@ public:
 
         bool respond(const Bottle &command, Bottle &reply)
         {
-
-//            return RFModule::respond(command,reply);
-            reply.addDouble(0.8);
-            reply.addDouble(-0.8);
-            reply.addDouble(0.5);
-            return true;
+            return RFModule::respond(command,reply);
         }
 
         double getPeriod()    { return 1.0;  }

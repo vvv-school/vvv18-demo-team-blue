@@ -1,0 +1,51 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+build/
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build products
+scripts/src/build*/
+
+# Linux temp files
+*~
+
+# Caffe binaries
+*.caffemodel
+*.binaryproto
+*.mdb
+*.solverstate
+
+# Products of Caffe training
+caffe.*
+caffeINFOtrain.txt
+caffeINFOval.txt
+test_acc_*.txt
+
+# Images
+*.png
+*.jpg
+
+# MAC stuff
+*.DS_store
+
+# python
+*.pyc
+.idea

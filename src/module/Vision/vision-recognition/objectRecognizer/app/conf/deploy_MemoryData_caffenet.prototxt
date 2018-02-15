@@ -7,7 +7,7 @@ layer {
   transform_param {
     mirror: false
     crop_size: 227
-    mean_file: "/home/icub/robot-code/dl-lab/tutorial_dl-tuning/id_2objects/mean.binaryproto"
+    mean_file: "/home/icub/robot-code/dl-lab/tutorial_dl-deployment/objectRecognizer/app/deployment_info_omar/mean.binaryproto"
   }
   memory_data_param {
     batch_size: 1

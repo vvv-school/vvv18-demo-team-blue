@@ -37,6 +37,26 @@
         <protocol>tcp</protocol>
     </connection>
 
+    <!-- Start  Omar -->
+    <connection>
+        <from>/closest-blob/target:o</from>
+        <to>/objectRecognizer/in_label:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+
+    <connection>
+        <from>/closest-blob/crop:o</from>
+        <to>/objectRecognizer/img:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/objectRecognizer/match:o</from>
+        <to>/closest-blob/classif:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
     <connection>
         <from>/objectRecognizer/view:o</from>
         <to>/recview</to>
