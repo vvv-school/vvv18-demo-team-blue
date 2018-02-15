@@ -7,6 +7,10 @@
 
 using namespace std;
 using namespace yarp::os;
+enum OBJECTS{
+    MUG=0,
+    SODA_BOTTLE
+};
 
 class NLPModule:public RFModule
 {
@@ -53,13 +57,33 @@ public:
         if (command.size() == 1 && command.get(0).asString()=="quit")
             return false;
         else if (command.size() == 1 && command.get(0).asString() == "listen") {
-         reply = listen();
+
+            Bottle bottleOfWords = listen();
+            reply.clear();
+            for(int i =0; i < bottleOfWords.size(); i++){
+                std::string words = bottleOfWords.get(0).asString();
+                std::size_t found = words.find("bottle");
+                if (found != string::npos){
+                    reply.addInt(SODA_BOTTLE);
+                    break;
+                }
+                else {
+                    found = words.find("mug");
+                    reply.addInt(MUG);
+                    break;
+                }
+            }
+
         } else if (command.size() == 2 && command.get(0).asString() == "talk") {
 
             reply.addInt(talk(command.get(1).asString()));
         }
         else{
+            handlerPort.reply(reply);
             return false;
+        }
+        if (reply.size() == 0){
+            reply.addInt(MUG);
         }
         handlerPort.reply(reply);
         return true;
@@ -137,10 +161,10 @@ public:
 
         //-- initilization
         closing = false;
-//        if(!iSpeakHelper_port.open("/iolHelper/rpc")) {
-//            yError() << "Error opening helper rpc";
-//            return false;
-//        }
+        //        if(!iSpeakHelper_port.open("/iolHelper/rpc")) {
+        //            yError() << "Error opening helper rpc";
+        //            return false;
+        //        }
 
         if(!speechRecog_port.open("/speechRecognizer/rpc:o")) {
             yError() << "Error opening speech recognizer rpc";
