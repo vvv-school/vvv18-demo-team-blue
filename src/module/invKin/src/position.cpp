@@ -6,6 +6,7 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/os/RpcServer.h>
 #include <yarp/os/Time.h>
+#include <yarp/os/Vocab.h>
 
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/IControlLimits2.h>
@@ -336,7 +337,15 @@ public:
     virtual bool respond(const Bottle &cmd, Bottle &reply)
     {
         reply.clear();
-        if(cmd.get(0).asString()=="point")
+        if (cmd.get(0).asString()=="help")
+        {
+            reply.addVocab(Vocab::encode("many"));
+            reply.addString("Available commands:");
+            reply.addString("- point p0 p1 p2");
+            reply.addString("- high");
+            reply.addString("- quit");
+        }
+        else if(cmd.get(0).asString()=="point")
         {
             if(cmd.size()==4)
             {
@@ -359,8 +368,8 @@ public:
             return true;
         }
         else
-            reply.addInt(0);
- rpc.reply(reply);
+            // the father class already handles the "quit" command
+            return RFModule::respond(cmd,reply);
 
         return true;
     }

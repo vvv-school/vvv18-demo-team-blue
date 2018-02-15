@@ -13,7 +13,13 @@
   <port>/grabber</port>
 </dependencies>
 
-
+  <!-- state machine -->
+<module>
+  <name>vino-blue</name>
+  <node>localhost</node>
+</module>
+  
+  
 <!-- NLP Module -->
 <module>
   <name>NLP-Module</name>

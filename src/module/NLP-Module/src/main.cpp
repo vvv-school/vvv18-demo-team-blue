@@ -56,6 +56,13 @@ public:
         //just echo back the command
         if (command.size() == 1 && command.get(0).asString()=="quit")
             return false;
+        if (command.size() == 1 && command.get(0).asString()=="help") {
+            reply.addVocab(Vocab::encode("many"));
+            reply.addString("Available commands:");
+            reply.addString("- listen");
+            reply.addString("- talk <text to say>");
+            reply.addString("- quit");
+        }
         else if (command.size() == 1 && command.get(0).asString() == "listen") {
 
             Bottle bottleOfWords = listen();
