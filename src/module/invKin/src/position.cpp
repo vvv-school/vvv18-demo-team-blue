@@ -183,6 +183,7 @@ protected:
     }
 
 public:
+
     virtual bool configure(ResourceFinder &rf)
     {
         // open a client interface to connect to the joint controller
@@ -232,7 +233,16 @@ public:
 
     virtual bool respond(const Bottle &cmd, Bottle &reply)
     {
-        if(cmd.get(0).asString()=="point")
+        if (cmd.get(0).asString()=="help")
+        {
+            reply.addVocab(Vocab::encode("many"));
+            reply.addString("Available commands:");
+            reply.addString("- point [right/left]");
+            reply.addString("- sad");
+            reply.addString("- home");
+            reply.addString("- quit");
+        }
+        else if(cmd.get(0).asString()=="point")
         {
             if(cmd.size()==4)
             {
@@ -260,7 +270,11 @@ public:
             return false;
         }
         else
-            reply.addString("nack");
+        {
+            // reply.addString("nack");
+            // the father class already handles the "quit" command
+            return RFModule::respond(cmd,reply);
+        }
 
         return true;
     }

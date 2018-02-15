@@ -14,6 +14,7 @@
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/Mutex.h>
 #include <yarp/dev/CartesianControl.h>
+#include <yarp/os/Vocab.h>
 
 #include <cmath>
 

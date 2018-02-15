@@ -124,7 +124,14 @@ bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle&
 
     std::string cmd = command.get(0).asString();
     // rpc call
-    if (cmd == "detectForces")
+    if (cmd=="help")
+    {
+        response.addVocab(yarp::os::Vocab::encode("many"));
+        response.addString("Available commands:");
+        response.addString("- detectForces");
+        response.addString("- quit");
+    }
+    else if (cmd == "detectForces")
     {
         m_run = true;
         double t0 = yarp::os::Time::now();
@@ -138,6 +145,9 @@ bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle&
         response.addInt(m_forceFeedback);
         stateMachineHandlerPort.reply(response);
     }
+    else
+        // the father class already handles the "quit" command
+        return RFModule::respond(command,response);
 
     m_run = false;
 
