@@ -51,51 +51,116 @@
 <!-- end NLP Module -->
 
 <!-- vision -->
-<module>
-  <name>objectRecognizer</name>
-  <parameters>--from objectRecognizer.ini</parameters>
-  <node>localhost</node>
-<!--  <dependencies>
-    <port>/robot/detector/rpc:o</port>
-    <port>/robot/detector/rpc</port>
-  </dependencies>-->
-</module>
+    <module>
+        <name>yarpdev</name>
+        <parameters>--device opencv_grabber</parameters>
+        <node>localhost</node>
+    </module>
 
-<module>
-  <name>yarpview</name>
-  <parameters>--name /recview</parameters>
-  <node>localhost</node>
-</module>
+    <module>
+        <name>objectRecognizer</name>
+        <parameters>--from objectRecognizer.ini</parameters>
+        <node>localhost</node>
+    </module>
 
-<module>
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /recview</parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
         <name>yarpview</name>
         <parameters>--name /rechist</parameters>
         <node>localhost</node>
-</module>
+    </module>
+    
+     <module>
+        <name>closest-blob</name>
+        <node>localhost</node>
+    </module>
 
-<connection>
-   <from>/grabber</from>
-   <to>/objectRecognizer/img:i</to>
+    <module>
+        <name>yarpview</name>
+        <node>localhost</node>
+        <parameters>--name /output --x 0 --y 0 --RefreshTime 33 </parameters>
+    </module>
+    
+    <module>
+        <name>yarpview</name>
+        <node>localhost</node>
+        <parameters>--name /crop --x 300 --y 0 --RefreshTime 33 </parameters>
+    </module>
+    
+    <!-- Connections -->
+
+    <connection>
+        <from>/grabber</from>
+        <to>/objectRecognizer/img:i</to>
         <protocol>tcp</protocol>
-</connection>
+    </connection>
 
-<connection>
-  <from>/objectRecognizer/view:o</from>
-  <to>/recview</to>
-  <protocol>tcp</protocol>
-</connection>
 
-<connection>
-  <from>/objectRecognizer/hist:o</from>
-  <to>/rechist</to>
-  <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/closest-blob/target:o</from>
+        <to>/objectRecognizer/in_label:i</to>
+        <protocol>tcp</protocol>
+    </connection>
 
-<connection>
-    <from>/robot/detector/rpc:o</from>
-    <to>/robot/detector/rpc</to>
-    <protocol>tcp</protocol>
-</connection>
+
+    <connection>
+        <from>/closest-blob/crop:o</from>
+        <to>/objectRecognizer/img:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/objectRecognizer/match:o</from>
+        <to>/closest-blob/classif:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/objectRecognizer/view:o</from>
+        <to>/recview</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/objectRecognizer/hist:o</from>
+        <to>/rechist</to>
+        <protocol>tcp</protocol>
+    </connection>
+    
+    <connection>
+        <from>/SFM/disp:o</from>
+        <to>/closest-blob/disparity:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+
+     <connection>
+        <from>/closest-blob/2dpoint:o</from>
+        <to>/SFM/rpc</to>
+        <protocol>tcp</protocol>
+    </connection>	
+
+    <connection>
+        <from>/icub/camcalib/left/out</from>
+        <to>/closest-blob/image:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/closest-blob/image:o</from>
+        <to>/output</to>
+        <protocol>tcp</protocol>
+    </connection>
+    <connection>
+        <from>/closest-blob/crop:o</from>
+        <to>/crop</to>
+        <protocol>tcp</protocol>
+    </connection>
 
 <!-- end vision-->
 
