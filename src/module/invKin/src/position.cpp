@@ -37,6 +37,76 @@ protected:
     int fingers;
     std::vector<int> jointList ={8,9,10,11,12,13,14,15};
     std::vector<int> finger_joint_values = {70,15,180,4,7,85,150,240};
+    std::vector<int> hi5jointList ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    std::vector<int> highFive_joint_vals ={-73,40,-3,80,34,-19,-14,11,51,4,4,4,4,6,4,4};    
+
+    bool highFive()
+    {
+    
+        for (int i=0;i<hi5jointList.size();i++)
+        {
+            joint = hi5jointList[i];
+            // retrieve joint bounds
+            double min,max,range;
+            ilim->getLimits(joint,&min,&max);
+            range=max-min;
+
+            // retrieve current joint position
+            double enc;
+            ienc->getEncoder(joint,&enc);
+
+            // select target
+            double target;
+            if (highFive_joint_vals[i] < min )
+            {
+                yError() <<"Highfive: joint " << i <<" below minimum threshold";
+                return false;
+            }
+            if (highFive_joint_vals[i] > max )
+            {
+                yError() <<"Highfive: joint " << i <<" above maximum threshold";
+                return false;
+             }   
+              
+
+            // set control mode
+            imod->setControlMode(joint,VOCAB_CM_POSITION);
+
+            // set up the speed in [deg/s]
+            ipos->setRefSpeed(joint,60.0);
+
+            // set up max acceleration in [deg/s^2]
+            ipos->setRefAcceleration(joint,100.0);
+
+            // yield the actual movement
+            yInfo()<<"Yielding new target: "<<target<<" [deg]";
+            ipos->positionMove(joint,highFive_joint_vals[i]);
+
+            // wait (with timeout) until the movement is completed
+            bool done=false;
+            double t0=Time::now();
+            while (!done&&(Time::now()-t0<0.1))
+            {
+                yInfo()<<"Waiting...";
+                Time::delay(0.1);   // release the quantum to avoid starving resources
+                ipos->checkMotionDone(&done);
+            }
+
+            if (done)
+            {
+                yInfo()<<"Movement completed";
+                return true;
+            }
+            else
+            {
+                yWarning()<<"Timeout expired";
+                return false;
+            }   
+        }
+    }
+
+
+
 
     void right()
     {
