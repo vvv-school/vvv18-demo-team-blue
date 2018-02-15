@@ -74,18 +74,8 @@ protected:
     /***************************************************/
     void happy()
     {
-        Time::delay(5.0);
-        ///TODO : check if this is important to keep this on if we do some gaze movements
-        // we ask the controller to keep the vergence
-        // from now on fixed at 5.0 deg, which is the
-        // configuration where we calibrated the stereo-vision;
-        // without that, we cannot retrieve good 3D positions
-        // with the real robot
-        //if (!simulation)
-        //    igaze->blockEyes(5.0);
-
         // Happy gaze
-        Vector ang(3); // setting the angle to 10.0 deg of vergence
+        //Vector ang(3); // setting the angle to 10.0 deg of vergence
         //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
         //igaze->lookAtAbsAnglesSync(ang);
         //igaze->waitMotionDone();
@@ -100,18 +90,8 @@ protected:
     /***************************************************/
     void sad()
     {
-        Time::delay(5.0);
-        ///TODO : check if this is important if we do some gaze movements
-        // we ask the controller to keep the vergence
-        // from now on fixed at 5.0 deg, which is the
-        // configuration where we calibrated the stereo-vision;
-        // without that, we cannot retrieve good 3D positions
-        // with the real robot
-        //if (!simulation)
-        //    igaze->blockEyes(5.0);
-
         // sad gaze
-        Vector ang(3); // setting the angle to 10.0 deg of vergence
+        //Vector ang(3); // setting the angle to 10.0 deg of vergence
         //ang[0] = 0; ang[1] = -30; ang[2] = 10.0;
         //igaze->lookAtAbsAnglesSync(ang);
         //igaze->waitMotionDone();
