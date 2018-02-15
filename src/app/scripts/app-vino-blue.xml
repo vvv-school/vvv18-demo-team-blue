@@ -1,5 +1,5 @@
 <application>
-<name> vino-blue </name>
+<name>vino-blue</name>
 
 <dependencies>
   <port>/yarplogger</port>
@@ -7,14 +7,20 @@
   <port>/icub/cartesianController/left_arm/state:o</port>
   <port>/icub/face/emotions/in</port>
   <port>/iKinGazeCtrl/rpc</port>
-  <port>/icubSim/right_arm/state:o</port>
+  <port>/icub/right_arm/state:o</port>
+  <port>/wholeBodyDynamics/left_arm/cartesianEndEffectorWrench:o</port>
+  <port>/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o</port>
+  <port>/grabber</port>
 </dependencies>
 
+  <!-- state machine -->
 <module>
   <name>vino-blue</name>
   <node>localhost</node>
 </module>
-
+  
+  
+<!-- NLP Module -->
 <module>
   <name>NLP-Module</name>
   <parameters></parameters>
@@ -25,9 +31,29 @@
   </dependencies>
 </module>
 
+<connection>
+    <from>/speechRecognizer/rpc:o</from>
+    <to>/speechRecognizer/rpc</to>
+    <protocol>udp</protocol>
+</connection>
+
+<connection>
+    <from>/iSpeak:o</from>
+    <to>/iSpeak</to>
+    <protocol>udp</protocol>
+</connection>
+
+<connection>
+    <from>/robot/voice_proc/rpc:o</from>
+    <to>/robot/voice_proc/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<!-- end NLP Module -->
+
+<!-- vision -->
 <module>
   <name>objectRecognizer</name>
-  <parameters></parameters>
+  <parameters>--from objectRecognizer.ini</parameters>
   <node>localhost</node>
   <dependencies>
     <port>/robot/detector/rpc:o</port>
@@ -36,8 +62,48 @@
 </module>
 
 <module>
+  <name>yarpview</name>
+  <parameters>--name /recview</parameters>
+  <node>localhost</node>
+</module>
+
+<module>
+        <name>yarpview</name>
+        <parameters>--name /rechist</parameters>
+        <node>localhost</node>
+</module>
+
+<connection>
+   <from>/grabber</from>
+   <to>/objectRecognizer/img:i</to>
+        <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/objectRecognizer/view:o</from>
+  <to>/recview</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/objectRecognizer/hist:o</from>
+  <to>/rechist</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from>/robot/detector/rpc:o</from>
+    <to>/robot/detector/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+
+<!-- end vision-->
+
+
+<!-- kinematics-->
+<module>
   <name>kinematics-position</name>
-  <parameters></parameters>
+  <parameters>--robot icub</parameters>
   <node>localhost</node>
   <dependencies>
     <port>/robot/point_object/rpc:o</port>
@@ -45,9 +111,18 @@
   </dependencies>
 </module>
 
+<connection>
+    <from>/robot/point_object/rpc:o</from>
+    <to>/robot/point_oject/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<!-- end kinematics-->
+
+
+<!-- dynamics -->
 <module>
   <name>wrenchEstimator</name>
-  <parameters></parameters>
+  <parameters>--robot icub</parameters>
   <node>localhost</node>
   <dependencies>
     <port>/robot/force_feedback/rpc:o</port>
@@ -55,6 +130,26 @@
   </dependencies>
 </module>
 
+<connection>
+    <from>/robot/force_feedback/rpc:o</from>
+    <to>/robot/force_feedback/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from>/wholeBodyDynamics/left_arm/cartesianEndEffectorWrench:o</from>
+    <to>/wrench-estimator/left_arm/cartesianEndEffectorWrench:i</to>
+    <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from>/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o</from>
+    <to>/wrench-estimator/right_arm/cartesianEndEffectorWrench:i</to>
+    <protocol>tcp</protocol>
+</connection>
+<!-- end dynamics -->
+
+<!-- behaviors -->
 <module>
   <name>behaviors</name>
   <parameters>--robot icub</parameters>
@@ -62,36 +157,9 @@
   <node>localhost</node>
   <dependencies>
     <port>/robot/behavior/rpc:o</port>
+    <port>/robot/behavior/rpc</port>
   </dependencies>
 </module>
-
-
-
-<connection>
-    <from>/robot/voice_proc/rpc:o</from>
-    <to>/robot/voice_proc/rpc</to>
-    <protocol>udp</protocol>
-</connection>
-
-<connection>
-    <from>/robot/detector/rpc:o</from>
-    <to>/robot/detector/rpc</to>
-    <protocol>udp</protocol>
-</connection>
-
-<connection>
-    <from>/robot/force_feedback/rpc:o</from>
-    <to>/robot/force_feedback/rpc</to>
-    <protocol>udp</protocol>
-</connection>
-
-<connection>
-    <from>/robot/point_object/rpc:o</from>
-    <to>/robot/point_object/rpc</to>
-    <protocol>udp</protocol>
-</connection>
-
-<!-- connections with other modules -->
 
 <connection>
     <from>/robot/behavior/emotions:o</from>
@@ -99,17 +167,11 @@
     <protocol>tcp</protocol>
 </connection>
 
-
-
-
-
-
-
-
-
-
-
-
-
+<connection>
+    <from>/robot/behavior/rpc:o</from>
+    <to>/robot/behavior/rpc</to>
+    <protocol>udp</protocol>
+</connection>
+<!-- end behaviors -->
 
 </application>

@@ -26,8 +26,8 @@
 </connection>
 
 <connection>
-    <from>/iSpeak/rpc:o</from>
-    <to>/iSpeak/rpc</to>
+    <from>/iSpeak:o</from>
+    <to>/iSpeak</to>
     <protocol>udp</protocol>
 </connection>
 
