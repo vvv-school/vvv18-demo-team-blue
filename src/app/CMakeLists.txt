@@ -1,6 +1,6 @@
 
 file(GLOB conf    ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini
-		  ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.png)
+		  ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.prototxt)
 
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.xml)
 
