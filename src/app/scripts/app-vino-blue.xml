@@ -19,10 +19,10 @@
   <name>NLP-Module</name>
   <parameters></parameters>
   <node>localhost</node>
-  <dependencies>
+<!--  <dependencies>
     <port>/robot/voice_proc/rpc:o</port>
     <port>/robot/voice_proc/rpc</port>
-  </dependencies>
+  </dependencies>-->
 </module>
 
 <connection>
@@ -49,10 +49,10 @@
   <name>objectRecognizer</name>
   <parameters>--from objectRecognizer.ini</parameters>
   <node>localhost</node>
-  <dependencies>
+<!--  <dependencies>
     <port>/robot/detector/rpc:o</port>
     <port>/robot/detector/rpc</port>
-  </dependencies>
+  </dependencies>-->
 </module>
 
 <module>
@@ -99,10 +99,10 @@
   <name>kinematics-position</name>
   <parameters>--robot icub</parameters>
   <node>localhost</node>
-  <dependencies>
+<!--  <dependencies>
     <port>/robot/point_object/rpc:o</port>
     <port>/robot/point_object/rpc</port>
-  </dependencies>
+  </dependencies>-->
 </module>
 
 <connection>
@@ -118,10 +118,10 @@
   <name>wrenchEstimator</name>
   <parameters>--robot icub</parameters>
   <node>localhost</node>
-  <dependencies>
+<!--  <dependencies>
     <port>/robot/force_feedback/rpc:o</port>
     <port>/robot/force_feedback/rpc</port>
-  </dependencies>
+  </dependencies>-->
 </module>
 
 <connection>
@@ -149,10 +149,10 @@
   <parameters>--robot icub</parameters>
   <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
   <node>localhost</node>
-  <dependencies>
+<!--  <dependencies>
     <port>/robot/behavior/rpc:o</port>
     <port>/robot/behavior/rpc</port>
-  </dependencies>
+  </dependencies>-->
 </module>
 
 <connection>
