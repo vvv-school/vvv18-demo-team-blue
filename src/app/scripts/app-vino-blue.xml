@@ -2,59 +2,66 @@
 <name> vino-blue </name>
 
 <dependencies>
+  <port>/yarplogger</port>
+  <port>/icub/cartesianController/right_arm/state:o</port>      
+  <port>/icub/cartesianController/left_arm/state:o</port>
+  <port>/icub/face/emotions/in</port>
+  <port>/iKinGazeCtrl/rpc</port>
+  <port>/icubSim/right_arm/state:o</port>
 </dependencies>
 
 <module>
-  <name> vino-blue </name>
-  <node> localhost </node>
+  <name>vino-blue</name>
+  <node>localhost</node>
 </module>
 
 <module>
-  <name> NLP-Module </name>
+  <name>NLP-Module</name>
   <parameters></parameters>
-  <node> localhost </node>
+  <node>localhost</node>
   <dependencies>
-    <port> /robot/voice_proc/rpc:o </port>
-    <port> /robot/voice_proc/rpc </port>
+    <port>/robot/voice_proc/rpc:o</port>
+    <port>/robot/voice_proc/rpc</port>
   </dependencies>
 </module>
 
 <module>
-  <name> Detector-Module </name>
+  <name>objectRecognizer</name>
   <parameters></parameters>
-  <node> localhost </node>
+  <node>localhost</node>
   <dependencies>
-    <port> /robot/detector/rpc:o </port>
-    <port> /robot/detector/rpc </port>
+    <port>/robot/detector/rpc:o</port>
+    <port>/robot/detector/rpc</port>
   </dependencies>
 </module>
 
 <module>
-  <name> PointObject-Module </name>
+  <name>kinematics-position</name>
   <parameters></parameters>
-  <node> localhost </node>
+  <node>localhost</node>
   <dependencies>
-    <port> /robot/point_object/rpc:o </port>
-    <port> /robot/point_object/rpc </port>
+    <port>/robot/point_object/rpc:o</port>
+    <port>/robot/point_object/rpc</port>
   </dependencies>
 </module>
 
 <module>
-  <name> ForceFeedback-Module </name>
+  <name>wrenchEstimator</name>
   <parameters></parameters>
-  <node> localhost </node>
+  <node>localhost</node>
   <dependencies>
-    <port> /robot/force_feedback/rpc:o </port>
-    <port> /robot/force_feedback/rpc </port>
+    <port>/robot/force_feedback/rpc:o</port>
+    <port>/robot/force_feedback/rpc</port>
   </dependencies>
 </module>
 
 <module>
-  <name> Behavior-Module </name>
-  <parameters></parameters>
-  <node> localhost </node>
+  <name>behaviors</name>
+  <parameters>--robot icub</parameters>
+  <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+  <node>localhost</node>
   <dependencies>
-    <port> /robot/behavior/rpc:o </port>
+    <port>/robot/behavior/rpc:o</port>
   </dependencies>
 </module>
 
@@ -73,16 +80,26 @@
 </connection>
 
 <connection>
-    <from>/robot/voice_proc/rpc:o</from>
-    <to>/robot/voice_proc/rpc</to>
-    <protocol>udp</protocol>
-</connection>
-
-<connection>
     <from>/robot/force_feedback/rpc:o</from>
     <to>/robot/force_feedback/rpc</to>
     <protocol>udp</protocol>
 </connection>
+
+<connection>
+    <from>/robot/point_object/rpc:o</from>
+    <to>/robot/point_object/rpc</to>
+    <protocol>udp</protocol>
+</connection>
+
+<!-- connections with other modules -->
+
+<connection>
+    <from>/robot/behavior/emotions:o</from>
+    <to>/icub/face/emotions/in</to>
+    <protocol>tcp</protocol>
+</connection>
+
+
 
 
 
