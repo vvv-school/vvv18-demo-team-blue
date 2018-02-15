@@ -191,10 +191,10 @@ public:
         Property optArml, optArmr;
         optArml.put("device","cartesiancontrollerclient");
         optArml.put("remote","/"+robot+"/cartesianController/left_arm");
-        optArml.put("local","/cartesian_client/left_arm");
+        optArml.put("local","/behaviors/cartesian_client/left_arm");
         optArmr.put("device","cartesiancontrollerclient");
         optArmr.put("remote","/"+robot+"/cartesianController/right_arm");
-        optArmr.put("local","/cartesian_client/right_arm");
+        optArmr.put("local","/behaviors/cartesian_client/right_arm");
 
         // let's give the controller some time to warm up
         bool ok_arms=false;
@@ -217,7 +217,7 @@ public:
         Property optGaze;
         optGaze.put("device","gazecontrollerclient");
         optGaze.put("remote","/iKinGazeCtrl");
-        optGaze.put("local","/tracker/gaze");
+        optGaze.put("local","/behaviors/tracker/gaze");
 
         bool ok_gaze=false;
         t0=Time::now();
