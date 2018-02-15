@@ -182,6 +182,8 @@ public:
 
     bool listenCommand(){
 
+        yInfo()<<"StateMachine::listenCommand : Executing listenCommand";
+
         yarp::os::Bottle command, response;
         command.addString("listen");
         voiceCommandPort.write(command,response);
@@ -215,6 +217,7 @@ public:
 
     bool pointAtObject(yarp::sig::Vector position){
 
+        yInfo()<<"StateMachine::pointAtObject : Pointing at object";
         if (position.size() != 3){
             yInfo()<<"StateMachine::pointAtObject : Position should be a vector of 3 points";
             return false;
@@ -232,6 +235,7 @@ public:
 
     bool talk(std::string text){
 
+        yInfo()<<"StateMachine::talking "+text;
         yarp::os::Bottle command, response;
         command.addString("talk");
         command.addString(text);
@@ -241,6 +245,8 @@ public:
     }
 
     bool high_five(bool val){
+
+        yInfo()<<"StateMachine::high-five";
 
         yarp::os::Bottle command, response;
         std::string str = val ? "high" : "low";
@@ -252,6 +258,8 @@ public:
     }
 
     bool detect_forces(){
+
+        yInfo()<<"StateMachine::detect-forces";
 
         yarp::os::Bottle command, response;
         command.addString("detectForces");
@@ -267,6 +275,8 @@ public:
 
     bool display_expression(std::string expression){
 
+        yInfo()<<"StateMachine::display-expression";
+
         yarp::os::Bottle command, response;
         command.addString(expression);
         behaviorPort.write(command,response);
@@ -276,11 +286,15 @@ public:
     /********************************************************/
     bool quit()
     {
+
+        yInfo()<<"StateMachine::quit";
         closing = true;
         return true;
     }
 
     void initializePorts(){
+
+        yInfo()<<"StateMachine::initializeports";
 
         std::string robot = "/robot";
         if(!voiceCommandPort.open(robot+"/voice_proc/rpc:o") ||
@@ -297,6 +311,7 @@ public:
     /********************************************************/
     bool configure(yarp::os::ResourceFinder &rf)
     {
+
         this->rf=&rf;
 
         std::string moduleName = rf.check("name", yarp::os::Value("vino-blue"), "module name (string)").asString();
