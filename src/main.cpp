@@ -125,6 +125,8 @@ public:
 
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
                 text_to_talk = "Give me a high five if that is right.";
+                yarp::os::Time::delay(2.0);
+                display_expression("home");
                 setState(TALKING);
                 fail_count = 0;
                 pointing_failure = 0;

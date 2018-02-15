@@ -76,13 +76,13 @@ protected:
             double target;
             if (highFive_joint_vals[i] < min )
             {
-                yError() <<"Highfive: joint " << i <<" below minimum threshold";
-                return false;
+                yWarning() <<"Highfive: joint " << i <<" below minimum threshold";
+//                return false;
             }
             if (highFive_joint_vals[i] > max )
             {
-                yError() <<"Highfive: joint " << i <<" above maximum threshold";
-                return false;
+                yWarning() <<"Highfive: joint " << i <<" above maximum threshold";
+//                return false;
              }
 
 
@@ -153,13 +153,13 @@ protected:
                     ienc->getEncoder(fingers,&enc);
                     if (finger_joint_values[i] < min )
                 {
-                  yError() <<"Fist: joint " << i <<" below minimum threshold";
-                  return false;
+                  yWarning() <<"Fist: joint " << i <<" below minimum threshold";
+//                  return false;
                 }
                 if (finger_joint_values[i] > max )
                 {
-                    yError() <<"Fist: joint " << i <<" above maximum threshold";
-                    return false;
+                    yWarning() <<"Fist: joint " << i <<" above maximum threshold";
+//                    return false;
                 }
 
 
