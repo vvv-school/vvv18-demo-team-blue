@@ -37,6 +37,7 @@ protected:
     Mutex mutex;
 
     bool simulation;
+    bool isClosing;
 
     int gaze_int;
     int arml_int;
@@ -152,6 +153,7 @@ public:
         yInfo() << "Behaviors:: configuration of the behaviors module...";
         string robot=rf.check("robot",Value("icubSim")).asString();
         simulation=(robot=="icubSim");
+        isClosing=false;
 
         // setting up the arms controller
         Property optArml, optArmr;
@@ -263,6 +265,7 @@ public:
     /***************************************************/
     bool interruptModule()
     {
+        isClosing=true;
         return true;
     }
 
@@ -331,38 +334,8 @@ public:
     /***************************************************/
     bool updateModule()
     {
-        ///TODO : send a bolean to inform the process ?
- /*       // get fresh images
-        ImageOf<PixelRgb> *imgL=imgLPortIn.read();
-        ImageOf<PixelRgb> *imgR=imgRPortIn.read();
-
-        // interrupt sequence detected
-        if ((imgL==NULL) || (imgR==NULL))
-            return false;
-
-        // compute the center-of-mass of pixels of our color
-        mutex.lock();
-        okL=getCOG(*imgL,cogL);
-        okR=getCOG(*imgR,cogR);
-        mutex.unlock();
-
-        PixelRgb color;
-        color.r=255; color.g=0; color.b=0;
-
-        if (okL)
-            draw::addCircle(*imgL,color,(int)cogL[0],(int)cogL[1],5);
-
-        if (okR)
-            draw::addCircle(*imgR,color,(int)cogR[0],(int)cogR[1],5);
-
-        imgLPortOut.prepare()=*imgL;
-        imgRPortOut.prepare()=*imgR;
-
-        imgLPortOut.write();
-        imgRPortOut.write();
-*/
-
-        return true;
+        yarp::os::Time::delay(1.0);
+        return !isClosing;
     }
 };
 
