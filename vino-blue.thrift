@@ -25,7 +25,7 @@ service state_machine
      * @param
      * @return true/false on success/failure.
      */
-    bool execute();
+    bool execute(i32 state=0);
 
     /**
      * Starts the init action, This resets the state of the robot and brings him back to home position.
@@ -71,9 +71,9 @@ service state_machine
 
     /**
      * @brief detect_forces calls the rpc to check force sensors on robot hand for a feedback from user
-     * @return  -1 for no feedback, 0 for negative feedback, and 1 for positive feedback from user.
+     * @return  true/false on success/failure.
      */
-     i32 detect_forces();
+     bool detect_forces();
 
     /**
      * @brief display_expression calls rpc to make the robot display a given expression

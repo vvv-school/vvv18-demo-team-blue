@@ -74,10 +74,10 @@ public:
     }
 
     /********************************************************/
-    bool execute()
+    bool execute(int s)
     {
-
-        state_val = INIT;
+        //default value of s is INIT
+        state_val = State(s);
         fail_count = 0;
         expression = "sad";
         short pointing_failure = 0;
@@ -117,6 +117,7 @@ public:
             if(state_val == POINTING_AT_OBJECT  && pointing_failure < FAILURE_THRESHOLD && pointAtObject(object_position) ) {
                 setState(TALKING);
                 fail_count = 0;
+                pointing_failure = 0;
             }
             else {
                 ++pointing_failure;
@@ -159,7 +160,7 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "If you are happy and you know it clap your hands.";
+                text_to_talk = "We came, we saw, we conquered";
                 setState(END);
             }
 
@@ -188,7 +189,7 @@ public:
             object_id = response.get(0).asInt();
             return true;
         }
-        return false;    // if we
+        return false;
     }
 
     bool detectObject(int object_id){
@@ -250,14 +251,18 @@ public:
         return (response.size() == 1 ? response.get(0).asBool() : false);
     }
 
-    int detect_forces(){
+    bool detect_forces(){
 
         yarp::os::Bottle command, response;
         command.addString("detectForces");
 
         forceFeedbackPort.write(command,response);
+        int status = NO_FEEDBACK;
+        if(response.size() == 1){
+            status = response.get(0).asInt();
+        }
 
-        return (response.size() == 1 ? response.get(0).asInt() : NO_FEEDBACK);
+        return status;
     }
 
     bool display_expression(std::string expression){
@@ -285,7 +290,6 @@ public:
                 !behaviorPort.open(robot+"/behavior/rpc:o")){
             yError()<<"StateMachine::initializePorts : Initializing ports failed";
         }
-
 
     }
 
