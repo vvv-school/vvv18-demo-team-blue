@@ -79,6 +79,7 @@ class WrenchEstimator : public yarp::os::RFModule
     bool estimateForceDirection(bool isRight);
 
 
+    bool forceUpdate();
 
     double m_period = 0.1;
 
@@ -92,7 +93,9 @@ class WrenchEstimator : public yarp::os::RFModule
     bool m_run = false;
 
     // threshold to account for zmobie force values
-    double m_forceThreshold = 5.0;
+    double m_forceThreshold_x = 0.0;
+    double m_forceThreshold_y = 0.0;
+    double m_forceThreshold_z = 0.0;
     yarp::os::Mutex m_mutex;
 
 public:
