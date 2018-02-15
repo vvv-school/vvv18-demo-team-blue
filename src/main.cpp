@@ -160,7 +160,7 @@ public:
             }
             else {
                 ++fail_count;
-                text_to_talk = "If you are happy and you know it clap your hands.";
+                text_to_talk = "We came, we saw, we conquered";
                 setState(END);
             }
 
