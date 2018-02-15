@@ -51,16 +51,17 @@ class WrenchEstimator : public yarp::os::RFModule
     // Vector to read pose of the hand from cartesian controller
     yarp::sig::Vector* handPose{nullptr};
 
-    //
+    // Vector to read wrench from whole body dynamics
     yarp::sig::Vector* cartesianWrench{nullptr};
+    // contact force vector
     yarp::sig::Vector contactForce;
 
-
+    // Cartesian control interface
     yarp::dev::PolyDriver drvArmRight, drvArmLeft;
     yarp::dev::ICartesianControl *iArmRight{nullptr}, *iArmLeft{nullptr};
 
+    // Read methods
     bool readContactForce();
-    bool readHandPose();
 
     /**
      * @brief getHandPose
@@ -79,10 +80,18 @@ class WrenchEstimator : public yarp::os::RFModule
 
 
 
-    double m_period;
+    double m_period = 0.1;
+
+    // which feedback
     int m_forceFeedback = -1;
+
+    // which hand
     bool m_rightHand = false;
+
+    // run only after state machine flag
     bool m_run = false;
+
+    // threshold to account for zmobie force values
     double m_forceThreshold = 5.0;
     yarp::os::Mutex m_mutex;
 
