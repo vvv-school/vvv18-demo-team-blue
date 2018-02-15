@@ -21,6 +21,8 @@ bool WrenchEstimator::readContactForce()
     contactForce(1) = (*cartesianWrench)[1];
     contactForce(2) = (*cartesianWrench)[2];
 
+    yInfo() << "Force norm: " << yarp::math::norm(contactForce);
+    yInfo() << "Force: " << contactForce(0) << " " << contactForce(1) << " "<< contactForce(2);
     if (yarp::math::norm(contactForce) < m_forceThreshold)
     {
         return false;
@@ -57,19 +59,22 @@ bool WrenchEstimator::estimateForceDirection(bool isRight = true)
     if (yarp::math::norm(contactForce) > m_forceThreshold)
     {
     // make sure magnitude of contact force is greater than 0
-            if (yarp::math::dot(zVector, contactForce) == 0)
+
+            if ( yarp::math::dot(zVector, contactForce) < -1)
             {
-                yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
+                return (true && isRight);
             }
-            else if ( yarp::math::dot(zVector, contactForce) > 0)
+            else if ( yarp::math::dot(zVector, contactForce) > 1)
             {
                 return (false && isRight);
             }
             else
             {
-                return (true && isRight);
+                yWarning() << "WrenchEstimator: Hey human! please touch against the palm.";
             }
+
     }
+    return false;
 }
 
 
@@ -144,15 +149,15 @@ bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle&
         while(m_forceFeedback == FORCE_FEEDBACK::NO_FEEDBACK || timeout < 2)
         {
             timeout += yarp::os::Time::now() - t0;
+            yInfo() << "Timeout: " << timeout;
         }
-
-        m_mutex.lock();
-        m_run = false;
-        m_mutex.unlock();
 
         response.addInt(m_forceFeedback);
         stateMachineHandlerPort.reply(response);
     }
+    m_mutex.lock();
+    m_run = false;
+    m_mutex.unlock();
 
 }
 
