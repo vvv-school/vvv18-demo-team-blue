@@ -92,6 +92,8 @@ class WrenchEstimator : public yarp::os::RFModule
     // run only after state machine flag
     bool m_run = false;
 
+    bool isClosing = false;
+
     // threshold to account for zmobie force values
     double m_forceThreshold_x = 0.0;
     double m_forceThreshold_y = 0.0;
@@ -105,6 +107,7 @@ public:
     virtual bool updateModule ();
     virtual bool configure (yarp::os::ResourceFinder &rf);
     virtual bool close ();
+    virtual bool interruptModule();
 };
 
 #endif

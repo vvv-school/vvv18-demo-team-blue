@@ -100,8 +100,8 @@ double WrenchEstimator::getPeriod() { return 0.01; }
 bool WrenchEstimator::updateModule()
 {
     readContactForce();
-
-   return true;
+    yarp::os::Time::delay(1.0);
+   return !isClosing;
 }
 
 bool WrenchEstimator::forceUpdate(){
@@ -145,7 +145,9 @@ bool WrenchEstimator::respond(const yarp::os::Bottle& command, yarp::os::Bottle&
 
 bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
 {
+    isClosing = false;
     bool ok = false;
+
 
     // open ports
     ok = rightWrenchInputPort.open("/wrench-estimator/right_arm/cartesianEndEffectorWrench:i");
@@ -160,14 +162,16 @@ bool WrenchEstimator::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
+    std::string robot = rf.check("robot", yarp::os::Value("icub")).asString();
+
     // open cartesian interface
     yarp::os::Property optArmRight, optArmLeft;
     optArmRight.put("device", "cartesiancontrollerclient");
-    optArmRight.put("remote", "/icub/cartesianController/right_arm");
+    optArmRight.put("remote", "/" + robot + "/cartesianController/right_arm");
     optArmRight.put("local", "/wrenchEstimator/cartesianClient/right_arm");
 
     optArmLeft.put("device", "cartesiancontrollerclient");
-    optArmLeft.put("remote", "/icub/cartesianController/left_arm");
+    optArmLeft.put("remote", "/" + robot + "/cartesianController/left_arm");
     optArmLeft.put("local", "/wrenchEstimator/cartesianClient/left_arm");
 
     ok = drvArmRight.open(optArmRight);
@@ -208,5 +212,11 @@ bool WrenchEstimator::close()
     iArmLeft = nullptr;
     iArmRight = nullptr;
 
+    return true;
+}
+
+bool WrenchEstimator::interruptModule()
+{
+    isClosing = true;
     return true;
 }
