@@ -178,7 +178,7 @@
 
 <connection>
     <from>/robot/point_object/rpc:o</from>
-    <to>/robot/point_oject/rpc</to>
+    <to>/robot/point_object/rpc</to>
     <protocol>tcp</protocol>
 </connection>
 <!-- end kinematics-->
