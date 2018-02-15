@@ -187,6 +187,7 @@ protected:
 
 
                 } //iterated though joints
+                
                   if (count.size() == jointList.size())
                           {
                              yInfo()<<"Fist completed";
@@ -199,6 +200,25 @@ protected:
                                 yInfo() << count[j];
                            //  return false;
                           }
+                          
+                          
+                          
+                          
+                                            yarp::sig::Vector curr_dof;
+                                            iarm->getDOF(curr_dof);
+                                            //        iarm->setTrackingMode(true);
+                                            yarp::sig::Vector new_dof = zeros(3);
+                                            new_dof[0]=0;
+                                            new_dof[1]=0;
+                                            new_dof[2]=0;
+                                            iarm->setDOF(new_dof, curr_dof);
+
+
+
+                          
+                          
+                          
+                          
 yInfo()<<"Getting pose";
                 iarm->getPose(3,I_pos,I_o);
                 Matrix R(3,3);
